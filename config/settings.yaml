@@ -1,0 +1,14 @@
+app:
+  name: stock-selection
+  environment: development
+  default_currency: USD
+
+ranking:
+  default_profile: balanced
+  min_required_pillars: 6
+  max_penalty_points: 25
+
+paths:
+  reports_dir: outputs/reports
+  snapshots_dir: outputs/snapshots
+  sample_data_dir: data/sample

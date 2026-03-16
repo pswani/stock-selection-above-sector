@@ -1,0 +1,15 @@
+name: aggressive
+pillar_weights:
+  RP: 25
+  G: 30
+  Q: 15
+  V: 10
+  R: 10
+  S: 10
+penalties:
+  max_total_penalty: 25
+  rules:
+    minimum_quality: 5
+    hype_risk: 12
+    trap_risk: 6
+    balance_sheet_fragility: 7

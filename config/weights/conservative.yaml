@@ -1,0 +1,15 @@
+name: conservative
+pillar_weights:
+  RP: 15
+  G: 15
+  Q: 25
+  V: 15
+  R: 25
+  S: 5
+penalties:
+  max_total_penalty: 25
+  rules:
+    minimum_quality: 8
+    hype_risk: 8
+    trap_risk: 8
+    balance_sheet_fragility: 9

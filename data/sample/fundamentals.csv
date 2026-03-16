@@ -1,0 +1,5 @@
+ticker,as_of,revenue_growth_yoy,eps_growth_yoy,operating_margin,gross_margin,return_on_equity,free_cash_flow_margin,debt_to_equity,net_debt_to_ebitda,diluted_share_count_growth_3y
+NVDA,2026-01-31,78.0,92.0,57.0,76.0,65.0,42.0,0.4,-1.0,1.5
+MSFT,2026-01-31,15.0,19.0,45.0,69.0,31.0,33.0,0.4,-0.8,0.3
+LLY,2026-01-31,24.0,35.0,28.0,81.0,58.0,24.0,2.0,1.8,0.4
+COST,2026-01-31,7.0,10.0,4.0,13.0,29.0,3.0,0.5,0.6,-0.5

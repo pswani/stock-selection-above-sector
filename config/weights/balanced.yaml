@@ -1,0 +1,15 @@
+name: balanced
+pillar_weights:
+  RP: 20
+  G: 25
+  Q: 20
+  V: 15
+  R: 15
+  S: 5
+penalties:
+  max_total_penalty: 25
+  rules:
+    minimum_quality: 6
+    hype_risk: 10
+    trap_risk: 8
+    balance_sheet_fragility: 7

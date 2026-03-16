@@ -1,0 +1,5 @@
+ticker,company_name,sector,industry_group,industry,sub_industry,country,exchange,currency,is_active
+NVDA,NVIDIA Corp,Information Technology,Semiconductors,Semiconductors,Semiconductor Devices,US,NASDAQ,USD,true
+MSFT,Microsoft Corp,Information Technology,Software,Application Software,Enterprise Software,US,NASDAQ,USD,true
+LLY,Eli Lilly and Company,Health Care,Pharmaceuticals,Biotechnology,Large Cap Pharma,US,NYSE,USD,true
+COST,Costco Wholesale Corp,Consumer Staples,Consumer Staples Distribution,Retail,Warehouse Clubs,US,NASDAQ,USD,true

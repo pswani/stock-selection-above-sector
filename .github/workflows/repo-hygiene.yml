@@ -1,0 +1,16 @@
+name: Repo Hygiene
+
+on:
+  pull_request:
+
+jobs:
+  verify-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure Codex handoff files exist
+        run: |
+          test -f AGENTS.md
+          test -f requirements/session-handoff.md
+          test -f requirements/roadmap.md
+          test -f requirements/decisions.md

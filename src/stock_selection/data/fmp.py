@@ -50,11 +50,31 @@ def _parse_split_ratio(row: dict[str, object]) -> float | None:
     if ratio is not None:
         return ratio
 
+    ratio_text = row.get("splitRatio")
+    if isinstance(ratio_text, str):
+        compact = ratio_text.strip().replace(" ", "")
+        for separator in ("/", ":"):
+            if separator in compact:
+                left, right = compact.split(separator, maxsplit=1)
+                numerator = _as_float(left)
+                denominator = _as_float(right)
+                if numerator is None or denominator in (None, 0):
+                    return None
+                return numerator / denominator
+
     numerator = _as_float(row.get("numerator"))
     denominator = _as_float(row.get("denominator"))
     if numerator is None or denominator in (None, 0):
         return None
     return numerator / denominator
+
+
+def _first_float(row: dict[str, object], keys: tuple[str, ...]) -> float | None:
+    for key in keys:
+        value = _as_float(row.get(key))
+        if value is not None:
+            return value
+    return None
 
 
 class FinancialModelingPrepProvider:
@@ -325,17 +345,33 @@ class FinancialModelingPrepProvider:
                 OwnershipSnapshot(
                     ticker=ticker,
                     as_of=as_of,
-                    institutional_ownership=_as_float(
-                        key_metrics_row.get("institutionalOwnershipPercentageTTM")
-                        or key_metrics_row.get("institutionalOwnershipPercentage")
+                    institutional_ownership=_first_float(
+                        key_metrics_row,
+                        (
+                            "institutionalOwnershipPercentageTTM",
+                            "institutionalOwnershipPercentage",
+                            "institutionalOwnership",
+                        ),
                     ),
-                    insider_ownership=_as_float(
-                        key_metrics_row.get("insiderOwnershipPercentageTTM")
-                        or key_metrics_row.get("insiderOwnershipPercentage")
+                    insider_ownership=_first_float(
+                        key_metrics_row,
+                        (
+                            "insiderOwnershipPercentageTTM",
+                            "insiderOwnershipPercentage",
+                            "insiderOwnership",
+                        ),
                     ),
-                    short_interest_percent_float=_as_float(
-                        short_interest_row.get("shortOutStandingPercent")
-                        or short_interest_row.get("shortFloatPercent")
+                    # Only percentage-based short-interest fields are mapped.
+                    # Absolute share-count variants remain intentionally unsupported
+                    # because the canonical model currently only stores percentages.
+                    short_interest_percent_float=_first_float(
+                        short_interest_row,
+                        (
+                            "shortOutStandingPercent",
+                            "shortOutstandingPercent",
+                            "shortFloatPercent",
+                            "shortPercentOfFloat",
+                        ),
                     ),
                 )
             )

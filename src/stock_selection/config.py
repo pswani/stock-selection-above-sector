@@ -46,6 +46,8 @@ class SettingsModel(BaseModel):
 class EnvSettings(BaseSettings):
     stock_selection_settings: str = "config/settings.yaml"
     app_env: str = "development"
+    stock_selection_fmp_api_key: str = ""
+    stock_selection_fmp_base_url: str = "https://financialmodelingprep.com/api/v3"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -63,3 +65,7 @@ def load_settings(path: str | Path = "config/settings.yaml") -> SettingsModel:
 def load_weight_profile(name: str, root: str | Path = "config/weights") -> WeightProfile:
     payload = load_yaml(Path(root) / f"{name}.yaml")
     return WeightProfile.model_validate(payload)
+
+
+def load_env_settings() -> EnvSettings:
+    return EnvSettings()

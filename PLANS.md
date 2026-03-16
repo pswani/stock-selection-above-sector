@@ -39,3 +39,117 @@ Risks / open questions:
 
 Resume prompt:
 - Exact copy-paste prompt to continue this plan.
+
+---
+
+### 2026-03-16 — Full stock-selection framework implementation
+Status: in_progress
+Owner: Codex
+Related files:
+- `src/stock_selection/models.py`
+- `src/stock_selection/factors/`
+- `src/stock_selection/universe/`
+- `src/stock_selection/data/providers.py`
+- `src/stock_selection/normalize/`
+- `src/stock_selection/scoring/`
+- `src/stock_selection/penalties/`
+- `src/stock_selection/backtest/`
+- `src/stock_selection/reporting.py`
+- `src/stock_selection/cli/main.py`
+- `tests/`
+- `docs/architecture.md`
+- `docs/scoring-spec.md`
+- `docs/validation-spec.md`
+
+Objective:
+- Deliver the full deterministic, modular, testable framework for sector-relative stock selection in small resumable milestones.
+
+Design constraints:
+- No invented financial data or fake provider behavior.
+- Deterministic and config-driven scoring and penalties.
+- Explicit missing-data handling and confidence surfacing.
+- Strong typed schemas and validation.
+- Isolated provider abstractions from factor/scoring logic.
+
+Milestones:
+1. **Milestone 1 — Canonical factor schema + registry (completed)**
+   - Scope:
+     - Add canonical factor definitions and validated metadata schema.
+     - Add deterministic registry for factor definitions with duplicate protection.
+     - Add missing-data policy fields needed by later pillar implementations.
+   - Acceptance criteria:
+     - Factor definition model validates required metadata and direction.
+     - Registry supports register/get/list deterministically.
+     - Duplicate registration and unknown lookup failures are explicit.
+   - Tests:
+     - Unit tests for schema validation.
+     - Unit tests for registry behaviors and deterministic ordering.
+   - Dependencies: none.
+
+2. **Milestone 2 — Investable universe + peer mapping foundations (completed)**
+   - Scope: eligibility contract, classification-level peer mapping helpers, configurable exclusion rules.
+   - Acceptance criteria: deterministic eligibility output and peer groups for sector/industry/sub-industry.
+   - Tests: unit tests for filters and mapping edge cases.
+   - Dependencies: Milestone 1.
+
+3. **Milestone 3 — Provider contracts expansion (current)**
+   - Scope: extend provider interfaces for prices/returns/volume, corporate actions, fundamentals, estimates/revisions, ownership/short-interest (optional availability).
+   - Acceptance criteria: typed provider interfaces and fixtures; unsupported datasets reported explicitly.
+   - Tests: interface fixture tests + missing-data behavior tests.
+   - Progress: FMP primary adapter implemented for securities/prices/fundamentals/estimates/peer-groups; corporate-actions and ownership/short-interest currently explicit unsupported-capability responses.
+   - Dependencies: Milestones 1-2.
+
+4. **Milestone 4 — Sector-relative normalization engine**
+   - Scope: peer-relative percentile/z-score normalization with robust missing-data handling.
+   - Acceptance criteria: deterministic normalized outputs for fixed fixtures and peer groups.
+   - Tests: unit tests covering tiny peer groups, ties, nulls, outliers.
+   - Dependencies: Milestones 1-3.
+
+5. **Milestone 5 — Relative Performance (RP) pillar end-to-end**
+   - Scope: first complete pillar from factor inputs to normalized pillar score.
+   - Acceptance criteria: RP score card produced with diagnostics and coverage ratio.
+   - Tests: unit tests + integration test through composite assembly.
+   - Dependencies: Milestones 1-4.
+
+6. **Milestone 6 — Remaining pillars (G, Q, V, R, S) incremental**
+   - Scope: implement one pillar per sub-step with explicit formulas and missing-data behavior.
+   - Acceptance criteria: all six pillars produce deterministic score cards with traces.
+   - Tests: per-pillar unit tests and integration checks.
+   - Dependencies: Milestones 1-5.
+
+7. **Milestone 7 — Rule-based penalties and regime sensitivity**
+   - Scope: hype trap, value trap, momentum crash penalties, config-driven thresholds.
+   - Acceptance criteria: penalty traces auditable and deterministic.
+   - Tests: rule unit tests for fire/no-fire boundaries.
+   - Dependencies: Milestones 1-6.
+
+8. **Milestone 8 — Ranking outputs + explainability cards**
+   - Scope: per-sector and global ranks, confidence scores, missing-data disclosure, explainability payloads.
+   - Acceptance criteria: ranking artifacts include required fields and confidence behavior.
+   - Tests: integration tests for ranking assembly and explainability output.
+   - Dependencies: Milestones 1-7.
+
+9. **Milestone 9 — Validation/backtest harness**
+   - Scope: monthly/quarterly rebalance, sector-neutral/global top-k, benchmark comparison, turnover/cost model, anti-bias guards, false-positive and regime tests.
+   - Acceptance criteria: reproducible validation run from fixtures with documented assumptions/limits.
+   - Tests: integration/snapshot tests for backtest outputs and guardrails.
+   - Dependencies: Milestones 1-8.
+
+10. **Milestone 10 — CLI/reporting/export workflow hardening**
+    - Scope: finalize CLI entry points for scoring, ranking, export, validation reports.
+    - Acceptance criteria: documented CLI workflow runs end-to-end on sample fixtures.
+    - Tests: CLI smoke tests + export contract tests.
+    - Dependencies: Milestones 1-9.
+
+Validation per milestone:
+- `uv run pytest -q` (or targeted tests for changed modules)
+- `uv run ruff check .`
+- `uv run pyright`
+
+Risks / open questions:
+- Final factor formulas/threshold calibrations are still pending and must remain config-driven.
+- FMP adapter is now the primary provider entry point; remaining Milestone 3 work includes additional datasets (corporate actions, ownership/short-interest) and tighter field mapping coverage.
+- Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
+
+Resume prompt:
+- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", start the next incomplete milestone only, and update handoff/roadmap/decisions after running tests.

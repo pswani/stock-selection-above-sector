@@ -85,6 +85,22 @@ class EstimateSnapshot(BaseModel):
     revenue_revision_90d: float | None = None
 
 
+class CorporateActionSnapshot(BaseModel):
+    ticker: str
+    as_of: date
+    action_type: str
+    value: float | None = None
+    currency: Currency = Currency.USD
+
+
+class OwnershipSnapshot(BaseModel):
+    ticker: str
+    as_of: date
+    institutional_ownership: float | None = None
+    insider_ownership: float | None = None
+    short_interest_percent_float: float | None = None
+
+
 class FactorObservation(BaseModel):
     ticker: str
     factor_name: str

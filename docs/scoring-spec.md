@@ -29,4 +29,4 @@ The system assumes six pillars:
 
 ## Current status
 This repo includes interfaces, typed models, and baseline composite / penalty orchestration. Full factor formulas remain intentionally incomplete so Codex can implement them milestone by milestone.
-Milestone 4 now includes a normalization handoff from `FactorObservation` outputs into a deterministic normalized factor frame before any pillar scoring is applied.
+Milestone 4 now includes a complete normalization handoff from `FactorObservation` outputs into typed normalized factor observations, with deterministic DataFrame projections available for downstream consumers before any pillar scoring is applied.

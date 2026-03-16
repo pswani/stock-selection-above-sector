@@ -99,14 +99,14 @@ Milestones:
    - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage includes split ratio strings (`a:b`, `a/b`), percentage ownership/short-interest aliases, broader fundamentals/estimates aliases, and final safe non-`TTM` ratio fallbacks for already-supported canonical fields. Tests cover supported/missing/unsupported paths and alias fallback behavior. Full local validation passes for pytest and pyright; remaining blocker is 5 pre-existing repo-wide Ruff UP042 findings outside Milestone 3 scope.
    - Dependencies: Milestones 1-2.
 
-4. **Milestone 4 — Sector-relative normalization engine (current)**
+4. **Milestone 4 — Sector-relative normalization engine (completed)**
    - Scope: peer-relative percentile/z-score normalization with robust missing-data handling.
    - Acceptance criteria: deterministic normalized outputs for fixed fixtures and peer groups.
    - Tests: unit tests covering tiny peer groups, ties, nulls, outliers.
-   - Progress: added a DataFrame-based peer-group normalization engine in `src/stock_selection/normalize/peer.py` that computes winsorized values, percentile ranks, robust z-scores, peer-group size/coverage, and explicit row statuses for missing peer groups, missing values, and insufficient valid peers. Added `src/stock_selection/normalize/factors.py` as the first downstream consumer: it accepts `FactorObservation` records, applies direction-aware normalization (`LOWER_IS_BETTER` values are sign-flipped into `oriented_value`), and returns a deterministic normalized factor frame. Focused tests now cover ties, tiny groups, nulls, outliers, required-column validation, and factor-output integration. Remaining Milestone 4 work is to tighten the consumer-facing normalized-factor contract for the next non-pillar consumer without expanding scope into full pillar logic.
+   - Progress: added a DataFrame-based peer-group normalization engine in `src/stock_selection/normalize/peer.py` that computes winsorized values, percentile ranks, robust z-scores, peer-group size/coverage, and explicit row statuses for missing peer groups, missing values, and insufficient valid peers. Added `src/stock_selection/normalize/factors.py` as the downstream factor consumer: it accepts `FactorObservation` records, applies direction-aware normalization (`LOWER_IS_BETTER` values are sign-flipped into `oriented_value`), and returns typed `NormalizedFactorObservation` outputs plus deterministic DataFrame projections. Focused tests now cover ties, tiny groups, nulls, outliers, required-column validation, factor-output integration, and frame projection from typed outputs.
    - Dependencies: Milestones 1-3.
 
-5. **Milestone 5 — Relative Performance (RP) pillar end-to-end**
+5. **Milestone 5 — Relative Performance (RP) pillar end-to-end (current)**
    - Scope: first complete pillar from factor inputs to normalized pillar score.
    - Acceptance criteria: RP score card produced with diagnostics and coverage ratio.
    - Tests: unit tests + integration test through composite assembly.
@@ -150,8 +150,8 @@ Validation per milestone:
 Risks / open questions:
 - Final factor formulas/threshold calibrations are still pending and must remain config-driven.
 - FMP adapter is now the primary provider entry point; provider-contract expansion is complete, and the next delivery risk shifts to documenting and implementing deterministic peer-relative normalization behavior for small/incomplete groups.
-- The new peer-group normalizer now has a factor-layer consumer; the next decision is whether the normalized-factor contract should remain a DataFrame or move to a thin typed wrapper before RP pillar work begins.
+- The normalized-factor contract is now typed; the next delivery risk is choosing the smallest RP pillar inputs/formulas that use it without prematurely generalizing for later pillars.
 - Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
 
 Resume prompt:
-- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", continue Milestone 4 only by tightening the normalized-factor contract for the next non-pillar consumer and keep pillar logic out of scope, then update handoff/roadmap/decisions after running tests.
+- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", start Milestone 5 only by implementing the narrowest end-to-end Relative Performance pillar path on top of the completed normalization contract, then update handoff/roadmap/decisions after running tests.

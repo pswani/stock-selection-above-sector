@@ -5,8 +5,11 @@ from datetime import date
 
 import pandas as pd
 
-from stock_selection.models import FactorObservation
-from stock_selection.normalize.factors import normalize_factor_observations
+from stock_selection.models import FactorObservation, NormalizedFactorObservation
+from stock_selection.normalize.factors import (
+    normalize_factor_observations,
+    normalized_factor_observations_to_frame,
+)
 
 
 @dataclass(slots=True)
@@ -24,5 +27,11 @@ class FactorCalculator:
 
 def normalize_factor_output(
     observations: list[FactorObservation],
-) -> pd.DataFrame:
+) -> list[NormalizedFactorObservation]:
     return normalize_factor_observations(observations)
+
+
+def normalized_factor_output_frame(
+    observations: list[NormalizedFactorObservation],
+) -> pd.DataFrame:
+    return normalized_factor_observations_to_frame(observations)

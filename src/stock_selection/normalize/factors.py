@@ -4,7 +4,11 @@ from datetime import date
 
 import pandas as pd
 
-from stock_selection.models import FactorObservation, MetricDirection
+from stock_selection.models import (
+    FactorObservation,
+    MetricDirection,
+    NormalizedFactorObservation,
+)
 from stock_selection.normalize.peer import normalize_by_peer_group
 
 NORMALIZED_FACTOR_COLUMNS = [
@@ -32,9 +36,9 @@ def normalize_factor_observations(
     min_group_size: int = 2,
     winsor_lower: float = 0.05,
     winsor_upper: float = 0.95,
-) -> pd.DataFrame:
+) -> list[NormalizedFactorObservation]:
     if not observations:
-        return pd.DataFrame(columns=NORMALIZED_FACTOR_COLUMNS)
+        return []
 
     rows = [
         {
@@ -91,4 +95,50 @@ def normalize_factor_observations(
             str(record[column_index["ticker"]]),
         ),
     )
-    return pd.DataFrame(sorted_rows, columns=NORMALIZED_FACTOR_COLUMNS)
+    return [
+        NormalizedFactorObservation(
+            ticker=str(record[column_index["ticker"]]),
+            factor_name=str(record[column_index["factor_name"]]),
+            direction=MetricDirection(str(record[column_index["direction"]])),
+            peer_group=(
+                None
+                if pd.isna(record[column_index["peer_group"]])
+                else str(record[column_index["peer_group"]])
+            ),
+            as_of=record[column_index["as_of"]],
+            source=(
+                None
+                if pd.isna(record[column_index["source"]])
+                else str(record[column_index["source"]])
+            ),
+            raw_value=_optional_float(record[column_index["raw_value"]]),
+            oriented_value=_optional_float(record[column_index["oriented_value"]]),
+            winsorized_value=_optional_float(record[column_index["winsorized_value"]]),
+            percentile_rank=_optional_float(record[column_index["percentile_rank"]]),
+            robust_zscore=_optional_float(record[column_index["robust_zscore"]]),
+            peer_group_size=int(record[column_index["peer_group_size"]]),
+            peer_group_valid_size=int(record[column_index["peer_group_valid_size"]]),
+            coverage_ratio=_optional_float(record[column_index["coverage_ratio"]]),
+            normalization_status=str(record[column_index["normalization_status"]]),
+        )
+        for record in sorted_rows
+    ]
+
+
+def normalized_factor_observations_to_frame(
+    observations: list[NormalizedFactorObservation],
+) -> pd.DataFrame:
+    if not observations:
+        return pd.DataFrame(columns=NORMALIZED_FACTOR_COLUMNS)
+    return pd.DataFrame([observation.model_dump(mode="python") for observation in observations])
+
+
+def _optional_float(value: object) -> float | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int | float):
+        numeric = float(value)
+        if pd.isna(numeric):
+            return None
+        return numeric
+    return None

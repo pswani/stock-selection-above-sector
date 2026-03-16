@@ -92,14 +92,14 @@ Milestones:
    - Tests: unit tests for filters and mapping edge cases.
    - Dependencies: Milestone 1.
 
-3. **Milestone 3 — Provider contracts expansion (current)**
+3. **Milestone 3 — Provider contracts expansion (completed)**
    - Scope: extend provider interfaces for prices/returns/volume, corporate actions, fundamentals, estimates/revisions, ownership/short-interest (optional availability).
    - Acceptance criteria: typed provider interfaces and fixtures; unsupported datasets reported explicitly.
    - Tests: interface fixture tests + missing-data behavior tests.
-   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage now includes split ratio strings (`a:b`, `a/b`) and additional ownership/short-interest percentage aliases, while unsupported endpoint families still fail explicitly. Tests cover supported/missing/unsupported paths, including additional safe fundamentals/estimates alias fallbacks. Full local validation now runs (`uv sync --dev`, `uv run pytest -q`, `uv run pyright`), and remaining blocker is 5 pre-existing repo-wide Ruff UP042 findings outside active Milestone 3 scope.
+   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage includes split ratio strings (`a:b`, `a/b`), percentage ownership/short-interest aliases, broader fundamentals/estimates aliases, and final safe non-`TTM` ratio fallbacks for already-supported canonical fields. Tests cover supported/missing/unsupported paths and alias fallback behavior. Full local validation passes for pytest and pyright; remaining blocker is 5 pre-existing repo-wide Ruff UP042 findings outside Milestone 3 scope.
    - Dependencies: Milestones 1-2.
 
-4. **Milestone 4 — Sector-relative normalization engine**
+4. **Milestone 4 — Sector-relative normalization engine (current)**
    - Scope: peer-relative percentile/z-score normalization with robust missing-data handling.
    - Acceptance criteria: deterministic normalized outputs for fixed fixtures and peer groups.
    - Tests: unit tests covering tiny peer groups, ties, nulls, outliers.
@@ -148,8 +148,8 @@ Validation per milestone:
 
 Risks / open questions:
 - Final factor formulas/threshold calibrations are still pending and must remain config-driven.
-- FMP adapter is now the primary provider entry point; remaining Milestone 3 work is final review for any additional safe alias coverage in existing interfaces without expanding canonical schemas or inventing data.
+- FMP adapter is now the primary provider entry point; provider-contract expansion is complete, and the next delivery risk shifts to documenting and implementing deterministic peer-relative normalization behavior for small/incomplete groups.
 - Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
 
 Resume prompt:
-- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", start the next incomplete milestone only, and update handoff/roadmap/decisions after running tests.
+- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", start Milestone 4 only, and update handoff/roadmap/decisions after running tests.

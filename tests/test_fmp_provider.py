@@ -176,6 +176,43 @@ def test_fmp_provider_uses_fundamental_and_estimate_alias_fallbacks() -> None:
     assert estimates[0].next_year_eps_growth == 0.11
 
 
+def test_fmp_provider_uses_non_ttm_ratio_alias_fallbacks() -> None:
+    class NonTtmRatioAliasStubProvider(FinancialModelingPrepProvider):
+        def __init__(self) -> None:
+            super().__init__(api_key="demo")
+
+        def _get_json(self, path: str, query=None):  # type: ignore[override]
+            if path.startswith("ratios-ttm/"):
+                return [
+                    {
+                        "peRatio": "18.5",
+                        "priceToSalesRatio": "3.4",
+                        "enterpriseValueMultiple": "9.8",
+                        "operatingProfitMargin": "0.22",
+                        "grossProfitMargin": "0.58",
+                        "debtEquityRatio": "0.37",
+                    }
+                ]
+            if path.startswith("financial-growth/"):
+                return [{}]
+            if path.startswith("analyst-estimates/"):
+                return [{}]
+            return []
+
+    provider = NonTtmRatioAliasStubProvider()
+
+    fundamentals = provider.get_fundamentals(["MSFT"], as_of=date(2026, 1, 31))
+    estimates = provider.get_estimates(["MSFT"], as_of=date(2026, 1, 31))
+
+    assert fundamentals[0].operating_margin == 0.22
+    assert fundamentals[0].gross_margin == 0.58
+    assert fundamentals[0].debt_to_equity == 0.37
+
+    assert estimates[0].forward_pe == 18.5
+    assert estimates[0].price_to_sales == 3.4
+    assert estimates[0].ev_to_ebitda == 9.8
+
+
 def test_fmp_provider_builds_peer_groups() -> None:
     provider = StubFmpProvider()
     groups = provider.get_peer_groups(["MSFT", "ADBE"], as_of=date(2026, 1, 31))

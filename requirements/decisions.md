@@ -21,4 +21,5 @@
 - Address repo-wide Ruff findings promptly when requested by review feedback; keep fixes behavior-preserving and scoped to lint compliance.
 - In this environment, pyright failures currently indicate missing third-party dependencies rather than a confirmed logic/type bug in `normalize/utils.py`.
 - FMP fundamentals/estimates parsing now uses explicit safe alias fallbacks via `_first_float(...)` for already-supported canonical fields without expanding schemas.
+- FMP ratio-based fundamentals/estimates parsing also accepts safe non-`TTM` aliases (`operatingProfitMargin`, `grossProfitMargin`, `debtEquityRatio`, `peRatio`, `priceToSalesRatio`, `enterpriseValueMultiple`) when they map directly to existing canonical fields.
 - `normalize.utils.robust_zscore` must return an explicit `pd.Series` to satisfy static typing and keep normalization deterministic.

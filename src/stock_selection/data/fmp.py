@@ -206,6 +206,8 @@ class FinancialModelingPrepProvider:
                         (
                             "operatingProfitMarginTTM",
                             "operatingMarginTTM",
+                            "operatingProfitMargin",
+                            "operatingMargin",
                         ),
                     ),
                     gross_margin=_first_float(
@@ -213,6 +215,8 @@ class FinancialModelingPrepProvider:
                         (
                             "grossProfitMarginTTM",
                             "grossMarginTTM",
+                            "grossProfitMargin",
+                            "grossMargin",
                         ),
                     ),
                     return_on_equity=_first_float(
@@ -228,6 +232,7 @@ class FinancialModelingPrepProvider:
                         (
                             "debtEquityRatioTTM",
                             "debtToEquityTTM",
+                            "debtEquityRatio",
                             "debtToEquity",
                         ),
                     ),
@@ -256,6 +261,8 @@ class FinancialModelingPrepProvider:
                         (
                             "peRatioTTM",
                             "priceEarningsRatioTTM",
+                            "peRatio",
+                            "priceEarningsRatio",
                         ),
                     ),
                     peg_ratio=_first_float(
@@ -270,6 +277,7 @@ class FinancialModelingPrepProvider:
                         (
                             "priceToSalesRatioTTM",
                             "priceToSalesTTM",
+                            "priceToSalesRatio",
                         ),
                     ),
                     ev_to_ebitda=_first_float(
@@ -277,6 +285,7 @@ class FinancialModelingPrepProvider:
                         (
                             "enterpriseValueMultipleTTM",
                             "evToEbitdaTTM",
+                            "enterpriseValueMultiple",
                         ),
                     ),
                     next_year_revenue_growth=_first_float(

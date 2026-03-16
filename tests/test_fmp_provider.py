@@ -2,7 +2,11 @@ from datetime import date
 
 import pytest
 
-from stock_selection.data.fmp import FinancialModelingPrepProvider, FmpProviderUnsupportedCapabilityError
+from stock_selection.data.fmp import (
+    FinancialModelingPrepProvider,
+    FmpProviderError,
+    FmpProviderUnsupportedCapabilityError,
+)
 from stock_selection.data.providers import build_primary_provider
 
 
@@ -11,6 +15,19 @@ class StubFmpProvider(FinancialModelingPrepProvider):
         super().__init__(api_key="demo")
 
     def _get_json(self, path: str, query=None):  # type: ignore[override]
+        if path.startswith("historical-price-full/stock_dividend/"):
+            return {
+                "historical": [
+                    {"date": "2026-01-10", "dividend": 0.75},
+                    {"date": "2026-01-20", "adjDividend": "0.80"},
+                ]
+            }
+        if path.startswith("historical-price-full/stock_split/"):
+            return {
+                "historical": [
+                    {"date": "2026-01-15", "numerator": 3, "denominator": 2},
+                ]
+            }
         if path == "stock/list":
             return [
                 {
@@ -55,6 +72,47 @@ class StubFmpProvider(FinancialModelingPrepProvider):
             return [{"estimatedRevenueAvg": 0.11, "estimatedEpsAvg": 0.15}]
         if path.startswith("profile/"):
             return [{"sector": "Information Technology", "industry": "Software"}]
+        if path.startswith("key-metrics-ttm/"):
+            return [
+                {
+                    "institutionalOwnershipPercentageTTM": "0.72",
+                    "insiderOwnershipPercentageTTM": 0.11,
+                }
+            ]
+        if path.startswith("short-interest/"):
+            return [{"shortOutStandingPercent": "0.034"}]
+        return []
+
+
+class MissingDataStubFmpProvider(FinancialModelingPrepProvider):
+    def __init__(self) -> None:
+        super().__init__(api_key="demo")
+
+    def _get_json(self, path: str, query=None):  # type: ignore[override]
+        if path.startswith("historical-price-full/stock_dividend/"):
+            return {"historical": [{"date": "2026-01-10", "dividend": None}]}
+        if path.startswith("historical-price-full/stock_split/"):
+            return {"historical": [{"date": "2026-01-15"}]}
+        if path.startswith("key-metrics-ttm/"):
+            return [{}]
+        if path.startswith("short-interest/"):
+            return [{}]
+        return []
+
+
+class UnsupportedEndpointStubFmpProvider(FinancialModelingPrepProvider):
+    def __init__(self) -> None:
+        super().__init__(api_key="demo")
+
+    def _get_json(self, path: str, query=None):  # type: ignore[override]
+        if path.startswith("historical-price-full/stock_dividend/"):
+            raise FmpProviderError("dividend endpoint unavailable")
+        if path.startswith("historical-price-full/stock_split/"):
+            raise FmpProviderError("split endpoint unavailable")
+        if path.startswith("key-metrics-ttm/"):
+            raise FmpProviderError("key metrics endpoint unavailable")
+        if path.startswith("short-interest/"):
+            raise FmpProviderError("short interest endpoint unavailable")
         return []
 
 
@@ -90,13 +148,69 @@ def test_build_primary_provider_requires_api_key(monkeypatch: pytest.MonkeyPatch
         build_primary_provider()
 
 
-def test_fmp_provider_explicitly_reports_unsupported_corporate_actions() -> None:
+def test_fmp_provider_parses_corporate_actions() -> None:
     provider = StubFmpProvider()
+    snapshots = provider.get_corporate_actions(
+        ["MSFT"],
+        start=date(2026, 1, 1),
+        end=date(2026, 1, 31),
+    )
+
+    assert [(snapshot.action_type, snapshot.value) for snapshot in snapshots] == [
+        ("dividend", 0.75),
+        ("split", 1.5),
+        ("dividend", 0.8),
+    ]
+
+
+def test_fmp_provider_parses_ownership_and_short_interest() -> None:
+    provider = StubFmpProvider()
+    snapshots = provider.get_ownership_and_short_interest(
+        ["MSFT"],
+        as_of=date(2026, 1, 31),
+    )
+
+    assert len(snapshots) == 1
+    assert snapshots[0].institutional_ownership == 0.72
+    assert snapshots[0].insider_ownership == 0.11
+    assert snapshots[0].short_interest_percent_float == 0.034
+
+
+def test_fmp_provider_preserves_missing_corporate_action_and_ownership_fields() -> None:
+    provider = MissingDataStubFmpProvider()
+
+    corporate_actions = provider.get_corporate_actions(
+        ["MSFT"],
+        start=date(2026, 1, 1),
+        end=date(2026, 1, 31),
+    )
+    ownership = provider.get_ownership_and_short_interest(
+        ["MSFT"],
+        as_of=date(2026, 1, 31),
+    )
+
+    assert [snapshot.value for snapshot in corporate_actions] == [None, None]
+    assert ownership[0].institutional_ownership is None
+    assert ownership[0].insider_ownership is None
+    assert ownership[0].short_interest_percent_float is None
+
+
+def test_fmp_provider_explicitly_reports_unsupported_corporate_actions() -> None:
+    provider = UnsupportedEndpointStubFmpProvider()
+
     with pytest.raises(FmpProviderUnsupportedCapabilityError, match="corporate actions"):
-        provider.get_corporate_actions(["MSFT"], start=date(2026, 1, 1), end=date(2026, 1, 31))
+        provider.get_corporate_actions(
+            ["MSFT"],
+            start=date(2026, 1, 1),
+            end=date(2026, 1, 31),
+        )
 
 
 def test_fmp_provider_explicitly_reports_unsupported_ownership() -> None:
-    provider = StubFmpProvider()
+    provider = UnsupportedEndpointStubFmpProvider()
+
     with pytest.raises(FmpProviderUnsupportedCapabilityError, match="ownership/short-interest"):
-        provider.get_ownership_and_short_interest(["MSFT"], as_of=date(2026, 1, 31))
+        provider.get_ownership_and_short_interest(
+            ["MSFT"],
+            as_of=date(2026, 1, 31),
+        )

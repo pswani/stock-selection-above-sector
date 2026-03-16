@@ -25,7 +25,7 @@ class StubFmpProvider(FinancialModelingPrepProvider):
         if path.startswith("historical-price-full/stock_split/"):
             return {
                 "historical": [
-                    {"date": "2026-01-15", "numerator": 3, "denominator": 2},
+                    {"date": "2026-01-15", "splitRatio": "3:2"},
                 ]
             }
         if path == "stock/list":
@@ -80,7 +80,7 @@ class StubFmpProvider(FinancialModelingPrepProvider):
                 }
             ]
         if path.startswith("short-interest/"):
-            return [{"shortOutStandingPercent": "0.034"}]
+            return [{"shortPercentOfFloat": "0.034"}]
         return []
 
 
@@ -193,6 +193,29 @@ def test_fmp_provider_preserves_missing_corporate_action_and_ownership_fields() 
     assert ownership[0].institutional_ownership is None
     assert ownership[0].insider_ownership is None
     assert ownership[0].short_interest_percent_float is None
+
+
+def test_fmp_provider_uses_non_ttm_ownership_fallback_fields() -> None:
+    class OwnershipFallbackStubProvider(FinancialModelingPrepProvider):
+        def __init__(self) -> None:
+            super().__init__(api_key="demo")
+
+        def _get_json(self, path: str, query=None):  # type: ignore[override]
+            if path.startswith("key-metrics-ttm/"):
+                return [{"institutionalOwnership": "0.67", "insiderOwnership": 0.09}]
+            if path.startswith("short-interest/"):
+                return [{"shortOutstandingPercent": "0.021"}]
+            return []
+
+    provider = OwnershipFallbackStubProvider()
+    snapshots = provider.get_ownership_and_short_interest(
+        ["MSFT"],
+        as_of=date(2026, 1, 31),
+    )
+
+    assert snapshots[0].institutional_ownership == 0.67
+    assert snapshots[0].insider_ownership == 0.09
+    assert snapshots[0].short_interest_percent_float == 0.021
 
 
 def test_fmp_provider_explicitly_reports_unsupported_corporate_actions() -> None:

@@ -1,1 +1,1 @@
-from stock_selection.cli.main import app
+from stock_selection.cli.main import app as app

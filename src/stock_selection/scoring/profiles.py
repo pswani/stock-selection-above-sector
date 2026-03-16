@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from stock_selection.config import WeightProfile, load_weight_profile
 
-
 AVAILABLE_PROFILES = ("balanced", "conservative", "aggressive")
 
 

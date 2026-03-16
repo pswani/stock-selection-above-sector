@@ -54,8 +54,12 @@ class OwnershipProvider(Protocol):
     ) -> list[OwnershipSnapshot]: ...
 
 
-def model_list_to_frame(records: list[object]) -> pd.DataFrame:
-    return pd.DataFrame([getattr(record, "model_dump")() for record in records])
+class ModelDumpable(Protocol):
+    def model_dump(self) -> dict[str, object]: ...
+
+
+def model_list_to_frame(records: list[ModelDumpable]) -> pd.DataFrame:
+    return pd.DataFrame([record.model_dump() for record in records])
 
 
 def build_primary_provider():

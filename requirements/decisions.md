@@ -14,5 +14,5 @@
 - `scripts/validate-env.sh` must be self-contained for fresh servers by including `uv` presence checks and `uv sync --dev --frozen` before validations.
 - Financial Modeling Prep (FMP) is the primary provider adapter; configure credentials through `STOCK_SELECTION_FMP_API_KEY` (and optional `STOCK_SELECTION_FMP_BASE_URL`).
 - Provider contracts now include corporate-actions and ownership/short-interest interfaces; unsupported FMP capabilities must fail explicitly via `FmpProviderUnsupportedCapabilityError` rather than returning invented data.
-
 - FMP unsupported-capability exception class is named `FmpProviderUnsupportedCapabilityError` to satisfy lint rule N818 and keep error semantics explicit.
+- Environment validation should be treated as healthy in this workspace: `scripts/bootstrap.sh` and `scripts/validate-env.sh` now run locally, so subsequent failures should be recorded as codebase lint/type issues rather than connectivity blockers.

@@ -96,7 +96,7 @@ Milestones:
    - Scope: extend provider interfaces for prices/returns/volume, corporate actions, fundamentals, estimates/revisions, ownership/short-interest (optional availability).
    - Acceptance criteria: typed provider interfaces and fixtures; unsupported datasets reported explicitly.
    - Tests: interface fixture tests + missing-data behavior tests.
-   - Progress: FMP primary adapter implemented for securities/prices/fundamentals/estimates/peer-groups; corporate-actions and ownership/short-interest currently explicit unsupported-capability responses.
+   - Progress: FMP primary adapter implemented for securities/prices/fundamentals/estimates/peer-groups; corporate-actions and ownership/short-interest currently explicit unsupported-capability responses. Local environment bootstrap/validation now runs successfully, `uv run pytest -q` passes, and remaining validation blockers are repo-wide Ruff/pyright failures.
    - Dependencies: Milestones 1-2.
 
 4. **Milestone 4 — Sector-relative normalization engine**

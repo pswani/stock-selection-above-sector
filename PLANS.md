@@ -103,7 +103,7 @@ Milestones:
    - Scope: peer-relative percentile/z-score normalization with robust missing-data handling.
    - Acceptance criteria: deterministic normalized outputs for fixed fixtures and peer groups.
    - Tests: unit tests covering tiny peer groups, ties, nulls, outliers.
-   - Progress: added a DataFrame-based peer-group normalization engine in `src/stock_selection/normalize/peer.py` that computes winsorized values, percentile ranks, robust z-scores, peer-group size/coverage, and explicit row statuses for missing peer groups, missing values, and insufficient valid peers. Focused tests now cover ties, tiny groups, nulls, outliers, and required-column validation. Remaining Milestone 4 work is to decide the narrowest consumer-facing normalization contract for downstream factor/pillar assembly without expanding scope into full pillar logic.
+   - Progress: added a DataFrame-based peer-group normalization engine in `src/stock_selection/normalize/peer.py` that computes winsorized values, percentile ranks, robust z-scores, peer-group size/coverage, and explicit row statuses for missing peer groups, missing values, and insufficient valid peers. Added `src/stock_selection/normalize/factors.py` as the first downstream consumer: it accepts `FactorObservation` records, applies direction-aware normalization (`LOWER_IS_BETTER` values are sign-flipped into `oriented_value`), and returns a deterministic normalized factor frame. Focused tests now cover ties, tiny groups, nulls, outliers, required-column validation, and factor-output integration. Remaining Milestone 4 work is to tighten the consumer-facing normalized-factor contract for the next non-pillar consumer without expanding scope into full pillar logic.
    - Dependencies: Milestones 1-3.
 
 5. **Milestone 5 — Relative Performance (RP) pillar end-to-end**
@@ -150,8 +150,8 @@ Validation per milestone:
 Risks / open questions:
 - Final factor formulas/threshold calibrations are still pending and must remain config-driven.
 - FMP adapter is now the primary provider entry point; provider-contract expansion is complete, and the next delivery risk shifts to documenting and implementing deterministic peer-relative normalization behavior for small/incomplete groups.
-- The new peer-group normalizer exists as a standalone primitive; the next decision is whether downstream code should consume raw DataFrames directly or a thin typed wrapper before RP pillar work begins.
+- The new peer-group normalizer now has a factor-layer consumer; the next decision is whether the normalized-factor contract should remain a DataFrame or move to a thin typed wrapper before RP pillar work begins.
 - Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
 
 Resume prompt:
-- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", continue Milestone 4 only by defining the narrowest downstream contract for the peer-group normalization engine and wiring it into the next normalization consumer without starting pillar logic, then update handoff/roadmap/decisions after running tests.
+- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", continue Milestone 4 only by tightening the normalized-factor contract for the next non-pillar consumer and keep pillar logic out of scope, then update handoff/roadmap/decisions after running tests.

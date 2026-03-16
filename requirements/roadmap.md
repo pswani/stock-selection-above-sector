@@ -4,7 +4,7 @@
 Milestone 4 in progress: sector-relative normalization engine.
 
 ## Immediate milestones
-1. Finish Milestone 4 by wiring the new peer-group normalization engine into the factor/scoring flow that will consume it.
+1. Finish Milestone 4 by tightening the downstream normalized-factor contract that now connects `FactorObservation` outputs to the first normalization consumer.
 2. Implement first end-to-end pillar: Relative Performance.
 3. Implement remaining pillars incrementally (G, Q, V, R, S).
 4. Wire ranking confidence/missing-data disclosure into result assembly.
@@ -17,6 +17,7 @@ Milestone 4 in progress: sector-relative normalization engine.
 - Local validation on 2026-03-16 confirmed the bootstrap/validation scripts run successfully; `uv run pytest -q` and `uv run pyright` pass locally.
 - Current readiness blocker remains 5 pre-existing repo-wide Ruff UP042 findings outside the completed Milestone 3 scope; targeted Ruff for changed FMP files passes cleanly.
 - Milestone 4 now has a deterministic peer-group normalization primitive with targeted tests for ties, tiny groups, nulls, and outliers.
+- Milestone 4 now also has a factor-layer normalization adapter that consumes `FactorObservation` outputs and emits a deterministic normalized factor frame with explicit missing-data status.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

@@ -16,6 +16,7 @@ This repository provides an opinionated foundation for a sector-relative stock s
 3. **Feature and factor layer**
    - Deterministic factor computation
    - Factor metadata and traceability
+   - `FactorObservation` outputs as the normalization handoff contract
 4. **Normalization layer**
    - Sector-relative normalization
    - Percentiles / z-scores / winsorization

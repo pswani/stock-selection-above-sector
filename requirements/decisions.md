@@ -13,4 +13,6 @@
 - Environment scripts must assert availability of both runtime dependencies (`pydantic_settings`, `scipy`, `sklearn` included) and development tools (`pytest`, `ruff`, `pyright`) to prevent partial setups.
 - `scripts/validate-env.sh` must be self-contained for fresh servers by including `uv` presence checks and `uv sync --dev --frozen` before validations.
 - Financial Modeling Prep (FMP) is the primary provider adapter; configure credentials through `STOCK_SELECTION_FMP_API_KEY` (and optional `STOCK_SELECTION_FMP_BASE_URL`).
-- Provider contracts now include corporate-actions and ownership/short-interest interfaces; unsupported FMP capabilities must fail explicitly via `FmpProviderUnsupportedCapability` rather than returning invented data.
+- Provider contracts now include corporate-actions and ownership/short-interest interfaces; unsupported FMP capabilities must fail explicitly via `FmpProviderUnsupportedCapabilityError` rather than returning invented data.
+
+- FMP unsupported-capability exception class is named `FmpProviderUnsupportedCapabilityError` to satisfy lint rule N818 and keep error semantics explicit.

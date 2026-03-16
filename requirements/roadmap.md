@@ -4,7 +4,7 @@
 Milestone 3 in progress: provider contracts expansion started with Financial Modeling Prep (FMP) primary provider adapter.
 
 ## Immediate milestones
-1. Complete Milestone 3 provider contract expansion (corporate actions and ownership/short-interest data retrieval where available; explicit unsupported-capability handling already added).
+1. Complete Milestone 3 provider contract expansion (corporate actions and ownership/short-interest data retrieval where available; explicit unsupported-capability handling already added, including lint-compliant error naming).
 2. Implement sector-relative normalization engine with explicit missing-data behavior.
 3. Implement first end-to-end pillar: Relative Performance.
 4. Implement remaining pillars incrementally (G, Q, V, R, S).

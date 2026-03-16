@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from stock_selection.data.fmp import FinancialModelingPrepProvider, FmpProviderUnsupportedCapability
+from stock_selection.data.fmp import FinancialModelingPrepProvider, FmpProviderUnsupportedCapabilityError
 from stock_selection.data.providers import build_primary_provider
 
 
@@ -92,11 +92,11 @@ def test_build_primary_provider_requires_api_key(monkeypatch: pytest.MonkeyPatch
 
 def test_fmp_provider_explicitly_reports_unsupported_corporate_actions() -> None:
     provider = StubFmpProvider()
-    with pytest.raises(FmpProviderUnsupportedCapability, match="corporate actions"):
+    with pytest.raises(FmpProviderUnsupportedCapabilityError, match="corporate actions"):
         provider.get_corporate_actions(["MSFT"], start=date(2026, 1, 1), end=date(2026, 1, 31))
 
 
 def test_fmp_provider_explicitly_reports_unsupported_ownership() -> None:
     provider = StubFmpProvider()
-    with pytest.raises(FmpProviderUnsupportedCapability, match="ownership/short-interest"):
+    with pytest.raises(FmpProviderUnsupportedCapabilityError, match="ownership/short-interest"):
         provider.get_ownership_and_short_interest(["MSFT"], as_of=date(2026, 1, 31))

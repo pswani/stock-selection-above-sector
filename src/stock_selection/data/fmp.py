@@ -22,7 +22,7 @@ class FmpProviderError(RuntimeError):
     pass
 
 
-class FmpProviderUnsupportedCapability(FmpProviderError):
+class FmpProviderUnsupportedCapabilityError(FmpProviderError):
     pass
 
 
@@ -188,7 +188,7 @@ class FinancialModelingPrepProvider:
         start: date,
         end: date,
     ) -> list[CorporateActionSnapshot]:
-        raise FmpProviderUnsupportedCapability(
+        raise FmpProviderUnsupportedCapabilityError(
             "FMP corporate actions endpoint is not integrated yet in this milestone."
         )
 
@@ -197,7 +197,6 @@ class FinancialModelingPrepProvider:
         tickers: list[str],
         as_of: date,
     ) -> list[OwnershipSnapshot]:
-        raise FmpProviderUnsupportedCapability(
+        raise FmpProviderUnsupportedCapabilityError(
             "FMP ownership/short-interest endpoint is not integrated yet in this milestone."
         )
-

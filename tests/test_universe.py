@@ -1,3 +1,5 @@
+import pytest
+
 from stock_selection.models import Classification, Currency, Security, SecurityType
 from stock_selection.universe import (
     PeerLevel,
@@ -111,8 +113,5 @@ def test_build_standard_peer_maps_returns_sector_industry_sub_industry() -> None
 
 
 def test_build_peer_groups_rejects_invalid_min_group_size() -> None:
-    try:
+    with pytest.raises(ValueError, match="min_group_size must be >= 1"):
         build_peer_groups([_security("MSFT")], level=PeerLevel.SECTOR, min_group_size=0)
-        assert False, "Expected ValueError"
-    except ValueError as exc:
-        assert str(exc) == "min_group_size must be >= 1"

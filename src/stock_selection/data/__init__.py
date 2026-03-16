@@ -1,7 +1,7 @@
 from stock_selection.data.fmp import (
     FinancialModelingPrepProvider,
     FmpProviderError,
-    FmpProviderUnsupportedCapability,
+    FmpProviderUnsupportedCapabilityError,
 )
 from stock_selection.data.providers import (
     ClassificationProvider,
@@ -21,7 +21,7 @@ __all__ = [
     "EstimatesProvider",
     "FinancialModelingPrepProvider",
     "FmpProviderError",
-    "FmpProviderUnsupportedCapability",
+    "FmpProviderUnsupportedCapabilityError",
     "FundamentalsProvider",
     "OwnershipProvider",
     "PriceDataProvider",

@@ -22,5 +22,6 @@ def test_build_ranking_result_applies_penalty() -> None:
         pillar_scores={"RP": 70, "G": 70, "Q": 35, "V": 60, "R": 70, "S": 60},
         penalty_rules=[MinimumQualityPenalty()],
     )
-    assert result.total_penalty == profile.penalties.rules["minimum_quality"] if "minimum_quality" in profile.penalties.rules else 0
+    expected_penalty = profile.penalties.rules.get("minimum_quality", 0)
+    assert result.total_penalty == expected_penalty
     assert result.final_score <= result.weighted_score

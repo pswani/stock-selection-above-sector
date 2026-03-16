@@ -44,7 +44,11 @@ class PillarEngine:
 
 
 def weighted_sum(scores: Mapping[str, float], weights: Mapping[str, float]) -> float:
-    missing = [pillar for pillar in REQUIRED_PILLARS if pillar not in scores or pillar not in weights]
+    missing = [
+        pillar
+        for pillar in REQUIRED_PILLARS
+        if pillar not in scores or pillar not in weights
+    ]
     if missing:
         msg = f"Missing pillars in score calculation: {missing}"
         raise ValueError(msg)
@@ -66,8 +70,16 @@ def build_ranking_result(
         profile_name=profile.name,
         available_rules=profile.penalties.rules,
     )
-    traces = apply_penalties(ticker, pillar_scores, penalty_context, penalty_rules or [])
-    total_penalty = min(sum(trace.penalty_points for trace in traces), profile.penalties.max_total_penalty)
+    traces = apply_penalties(
+        ticker,
+        pillar_scores,
+        penalty_context,
+        penalty_rules or [],
+    )
+    total_penalty = min(
+        sum(trace.penalty_points for trace in traces),
+        profile.penalties.max_total_penalty,
+    )
     final_score = max(weighted - total_penalty, 0.0)
     return RankingResult(
         ticker=ticker,

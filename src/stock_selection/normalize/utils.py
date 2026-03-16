@@ -19,4 +19,5 @@ def robust_zscore(series: pd.Series) -> pd.Series:
     mad = float(np.median(np.abs(series - median)))
     if mad == 0:
         return pd.Series([0.0] * len(series), index=series.index)
-    return 0.6745 * (series - median) / mad
+    zscores = 0.6745 * (series - median) / mad
+    return pd.Series(zscores, index=series.index, dtype=float)

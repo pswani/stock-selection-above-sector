@@ -1,36 +1,46 @@
 # Session Handoff
 
 ## Completed
-- Implemented FMP corporate-actions retrieval in `src/stock_selection/data/fmp.py` using dividend and split endpoint families with deterministic sorting.
-- Implemented FMP ownership/short-interest retrieval in `src/stock_selection/data/fmp.py` using `key-metrics-ttm` and `short-interest`, preserving `None` for missing fields.
-- Added explicit optional-endpoint handling so unsupported FMP corporate-actions and ownership/short-interest coverage still raises `FmpProviderUnsupportedCapabilityError` instead of inventing data.
-- Added `_as_float(...)` and split-ratio parsing helpers for deterministic numeric coercion from nullable/string payload values.
-- Expanded `tests/test_fmp_provider.py` to cover supported-path parsing, missing-data handling, and unsupported endpoint behavior for the new Milestone 3 provider work.
+- Continued Milestone 3 only by reviewing remaining FMP interface mappings and adding safe alias coverage in existing contracts without changing canonical schemas.
+- Expanded `FinancialModelingPrepProvider` fallback parsing for fundamentals and estimates in `src/stock_selection/data/fmp.py` using `_first_float(...)`.
+  - Fundamentals aliases now include additional safe keys for revenue/eps growth, operating margin, gross margin, ROE, and debt-to-equity.
+  - Estimates aliases now include additional safe keys for forward PE, PEG, price-to-sales, EV/EBITDA, and next-year revenue/EPS growth.
+- Added focused unit coverage in `tests/test_fmp_provider.py` for new fundamentals/estimates alias fallback behavior.
+- Fixed the real pyright type error in `src/stock_selection/normalize/utils.py` by making the `robust_zscore` return type explicit as `pd.Series`.
+- Added `tests/test_normalize_utils.py` to validate winsorization, percentile rank, and robust-zscore behavior.
 
 ## Current status
 - Milestone 3 remains in progress.
-- FMP primary adapter now supports corporate-actions plus ownership/short-interest where FMP endpoint coverage exists, and still fails explicitly when those endpoint families are unavailable.
-- Environment setup is healthy; remaining validation failures are pre-existing repo-wide Ruff issues and one pre-existing pyright error outside the changed Milestone 3 scope.
+- FMP provider alias coverage is broader across already-supported methods while unsupported endpoint families/fields remain explicit and unchanged.
+- `uv sync --dev`, targeted/full pytest, and `uv run pyright` now run successfully in this environment.
+- `uv run ruff check .` still fails due to pre-existing repo-wide UP042 findings outside the changed Milestone 3 scope.
 
 ## Next task
-- Continue Milestone 3 only by tightening any remaining FMP field mappings/coverage gaps and documenting unsupported fields where FMP still lacks reliable data.
+- Continue Milestone 3 only by reviewing whether any additional safe alias mappings are still needed in remaining FMP provider paths while keeping unsupported capabilities explicit.
 
 ## Known blockers
-- `uv run ruff check .` currently fails on 25 repo-wide lint violations outside the changed Milestone 3 files.
-- `uv run pyright` currently fails on 1 pre-existing type error in `src/stock_selection/normalize/utils.py` line 22.
+- `uv run ruff check .` currently fails on 5 pre-existing UP042 findings in:
+  - `src/stock_selection/factors/registry.py`
+  - `src/stock_selection/models.py`
 
 ## Changed files
 - `src/stock_selection/data/fmp.py`
+- `src/stock_selection/normalize/utils.py`
 - `tests/test_fmp_provider.py`
+- `tests/test_normalize_utils.py`
 - `requirements/session-handoff.md`
 - `requirements/roadmap.md`
 - `requirements/decisions.md`
 - `PLANS.md`
 
 ## Validation run
-- `uv run pytest -q` (passed: `34 passed`)
-- `uv run ruff check .` (failed: 25 violations, all outside the changed Milestone 3 files)
-- `uv run pyright` (failed: 1 error in `src/stock_selection/normalize/utils.py:22`)
+- `uv sync --dev` (passed)
+- `uv run pytest -q tests/test_fmp_provider.py` (passed)
+- `uv run pytest -q tests/test_normalize_utils.py` (passed)
+- `uv run pytest -q tests/test_fmp_provider.py tests/test_normalize_utils.py` (passed)
+- `uv run pytest -q` (passed)
+- `uv run ruff check .` (failed: 5 pre-existing UP042 violations outside changed Milestone 3 scope)
+- `uv run pyright` (passed: `0 errors`)
 
 ## Exact next prompt
 Read:
@@ -45,8 +55,8 @@ Read:
 - docs/code_review.md
 
 Then:
-1. continue Milestone 3 only by reviewing whether any additional FMP corporate-action or ownership fields can be mapped safely without inventing data
-2. keep explicit unsupported behavior for endpoint families or fields that remain unavailable
-3. add/update unit tests only for any new supported-path parsing or missing-data behavior you introduce
-4. keep repo-wide Ruff/pyright failures in mind, but only fix issues required by the changed Milestone 3 scope unless explicitly asked to do broader cleanup
-5. run `uv run pytest -q`, `uv run ruff check .`, and `uv run pyright`, then update requirements/session-handoff.md, requirements/roadmap.md, requirements/decisions.md, and PLANS.md with the new results
+1. continue Milestone 3 only by reviewing remaining FMP interfaces for any final safe field alias coverage improvements
+2. keep explicit unsupported behavior for unavailable endpoint families or non-canonical fields
+3. add/update focused tests only for newly supported parsing paths
+4. avoid unrelated refactors
+5. run `uv run pytest -q`, `uv run ruff check .`, and `uv run pyright`, then update handoff/roadmap/decisions/PLANS with results

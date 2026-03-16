@@ -25,7 +25,7 @@ class StubFmpProvider(FinancialModelingPrepProvider):
         if path.startswith("historical-price-full/stock_split/"):
             return {
                 "historical": [
-                    {"date": "2026-01-15", "numerator": 3, "denominator": 2},
+                    {"date": "2026-01-15", "splitRatio": "3:2"},
                 ]
             }
         if path == "stock/list":
@@ -80,7 +80,7 @@ class StubFmpProvider(FinancialModelingPrepProvider):
                 }
             ]
         if path.startswith("short-interest/"):
-            return [{"shortOutStandingPercent": "0.034"}]
+            return [{"shortPercentOfFloat": "0.034"}]
         return []
 
 
@@ -129,6 +129,51 @@ def test_fmp_provider_parses_price_fundamental_and_estimate_snapshots() -> None:
     assert fundamentals[0].revenue_growth_yoy == 0.1
     assert estimates[0].forward_pe == 22.0
     assert estimates[0].next_year_eps_growth == 0.15
+
+
+def test_fmp_provider_uses_fundamental_and_estimate_alias_fallbacks() -> None:
+    class FundamentalEstimateAliasStubProvider(FinancialModelingPrepProvider):
+        def __init__(self) -> None:
+            super().__init__(api_key="demo")
+
+        def _get_json(self, path: str, query=None):  # type: ignore[override]
+            if path.startswith("ratios-ttm/"):
+                return [
+                    {
+                        "priceEarningsRatioTTM": "19.5",
+                        "pegRatio": "1.4",
+                        "priceToSalesTTM": "3.9",
+                        "evToEbitdaTTM": "10.2",
+                        "operatingMarginTTM": "0.25",
+                        "grossMarginTTM": "0.61",
+                        "returnOnEquity": "0.18",
+                        "debtToEquity": "0.42",
+                    }
+                ]
+            if path.startswith("financial-growth/"):
+                return [{"growthRevenue": "0.09", "epsGrowth": "0.12"}]
+            if path.startswith("analyst-estimates/"):
+                return [{"estimatedRevenueGrowth": "0.08", "estimatedEpsGrowth": "0.11"}]
+            return []
+
+    provider = FundamentalEstimateAliasStubProvider()
+
+    fundamentals = provider.get_fundamentals(["MSFT"], as_of=date(2026, 1, 31))
+    estimates = provider.get_estimates(["MSFT"], as_of=date(2026, 1, 31))
+
+    assert fundamentals[0].revenue_growth_yoy == 0.09
+    assert fundamentals[0].eps_growth_yoy == 0.12
+    assert fundamentals[0].operating_margin == 0.25
+    assert fundamentals[0].gross_margin == 0.61
+    assert fundamentals[0].return_on_equity == 0.18
+    assert fundamentals[0].debt_to_equity == 0.42
+
+    assert estimates[0].forward_pe == 19.5
+    assert estimates[0].peg_ratio == 1.4
+    assert estimates[0].price_to_sales == 3.9
+    assert estimates[0].ev_to_ebitda == 10.2
+    assert estimates[0].next_year_revenue_growth == 0.08
+    assert estimates[0].next_year_eps_growth == 0.11
 
 
 def test_fmp_provider_builds_peer_groups() -> None:
@@ -193,6 +238,29 @@ def test_fmp_provider_preserves_missing_corporate_action_and_ownership_fields() 
     assert ownership[0].institutional_ownership is None
     assert ownership[0].insider_ownership is None
     assert ownership[0].short_interest_percent_float is None
+
+
+def test_fmp_provider_uses_non_ttm_ownership_fallback_fields() -> None:
+    class OwnershipFallbackStubProvider(FinancialModelingPrepProvider):
+        def __init__(self) -> None:
+            super().__init__(api_key="demo")
+
+        def _get_json(self, path: str, query=None):  # type: ignore[override]
+            if path.startswith("key-metrics-ttm/"):
+                return [{"institutionalOwnership": "0.67", "insiderOwnership": 0.09}]
+            if path.startswith("short-interest/"):
+                return [{"shortOutstandingPercent": "0.021"}]
+            return []
+
+    provider = OwnershipFallbackStubProvider()
+    snapshots = provider.get_ownership_and_short_interest(
+        ["MSFT"],
+        as_of=date(2026, 1, 31),
+    )
+
+    assert snapshots[0].institutional_ownership == 0.67
+    assert snapshots[0].insider_ownership == 0.09
+    assert snapshots[0].short_interest_percent_float == 0.021
 
 
 def test_fmp_provider_explicitly_reports_unsupported_corporate_actions() -> None:

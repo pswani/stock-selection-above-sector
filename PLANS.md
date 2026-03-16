@@ -96,7 +96,7 @@ Milestones:
    - Scope: extend provider interfaces for prices/returns/volume, corporate actions, fundamentals, estimates/revisions, ownership/short-interest (optional availability).
    - Acceptance criteria: typed provider interfaces and fixtures; unsupported datasets reported explicitly.
    - Tests: interface fixture tests + missing-data behavior tests.
-   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Unsupported endpoint families still fail explicitly, tests cover supported/missing/unsupported paths, `uv run pytest -q` passes, and remaining validation blockers are repo-wide Ruff issues plus one pre-existing pyright error outside Milestone 3 scope.
+   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage now includes split ratio strings (`a:b`, `a/b`) and additional ownership/short-interest percentage aliases, while unsupported endpoint families still fail explicitly. Tests cover supported/missing/unsupported paths, including additional safe fundamentals/estimates alias fallbacks. Full local validation now runs (`uv sync --dev`, `uv run pytest -q`, `uv run pyright`), and remaining blocker is 5 pre-existing repo-wide Ruff UP042 findings outside active Milestone 3 scope.
    - Dependencies: Milestones 1-2.
 
 4. **Milestone 4 — Sector-relative normalization engine**
@@ -148,7 +148,7 @@ Validation per milestone:
 
 Risks / open questions:
 - Final factor formulas/threshold calibrations are still pending and must remain config-driven.
-- FMP adapter is now the primary provider entry point; remaining Milestone 3 work includes additional datasets (corporate actions, ownership/short-interest) and tighter field mapping coverage.
+- FMP adapter is now the primary provider entry point; remaining Milestone 3 work is final review for any additional safe alias coverage in existing interfaces without expanding canonical schemas or inventing data.
 - Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
 
 Resume prompt:

@@ -14,7 +14,7 @@ Milestone 3 in progress: provider contracts expansion started with Financial Mod
 - Fresh-server environment initialization is standardized via `scripts/bootstrap.sh` and `scripts/validate-env.sh`.
 - Environment scripts now check complete runtime/developer dependency availability before milestone work proceeds.
 - `validate-env.sh` is self-contained (uv check + frozen sync) for newly provisioned servers.
-- Local validation on 2026-03-16 confirmed the bootstrap/validation scripts now run successfully; current readiness blockers remain 25 pre-existing repo-wide Ruff violations and 1 pre-existing pyright error outside the changed Milestone 3 files.
+- Local validation on 2026-03-16 confirmed the bootstrap/validation scripts now run successfully; repo-wide Ruff baseline is now clean. Current readiness blocker is environment dependency installation/network access for full uv/pytest/pyright validation in this container.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

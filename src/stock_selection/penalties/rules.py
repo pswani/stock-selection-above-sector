@@ -10,7 +10,12 @@ class MinimumQualityPenalty(PenaltyRule):
     def __init__(self, threshold: float = 40.0) -> None:
         self.threshold = threshold
 
-    def evaluate(self, ticker: str, pillar_scores: dict[str, float], context: PenaltyContext) -> PenaltyTrace | None:
+    def evaluate(
+        self,
+        ticker: str,
+        pillar_scores: dict[str, float],
+        context: PenaltyContext,
+    ) -> PenaltyTrace | None:
         quality = pillar_scores.get("Q")
         if quality is None or quality >= self.threshold:
             return None

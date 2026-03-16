@@ -96,7 +96,7 @@ Milestones:
    - Scope: extend provider interfaces for prices/returns/volume, corporate actions, fundamentals, estimates/revisions, ownership/short-interest (optional availability).
    - Acceptance criteria: typed provider interfaces and fixtures; unsupported datasets reported explicitly.
    - Tests: interface fixture tests + missing-data behavior tests.
-   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage now includes split ratio strings (`a:b`, `a/b`) and additional ownership/short-interest percentage aliases, while unsupported endpoint families still fail explicitly. Tests cover supported/missing/unsupported paths, `uv run pytest -q` passes, and remaining validation blockers are repo-wide Ruff issues plus one pre-existing pyright error outside Milestone 3 scope.
+   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage now includes split ratio strings (`a:b`, `a/b`) and additional ownership/short-interest percentage aliases, while unsupported endpoint families still fail explicitly. Tests cover supported/missing/unsupported paths. Repo-wide Ruff issues requested in review are now resolved; remaining validation blocker in this container is dependency installation/network access preventing full `uv`/pyright execution.
    - Dependencies: Milestones 1-2.
 
 4. **Milestone 4 — Sector-relative normalization engine**

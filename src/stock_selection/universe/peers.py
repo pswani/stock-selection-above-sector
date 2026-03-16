@@ -49,8 +49,16 @@ def build_standard_peer_maps(
     min_group_size: int = 1,
 ) -> dict[PeerLevel, list[PeerGroup]]:
     return {
-        PeerLevel.SECTOR: build_peer_groups(securities, level=PeerLevel.SECTOR, min_group_size=min_group_size),
-        PeerLevel.INDUSTRY: build_peer_groups(securities, level=PeerLevel.INDUSTRY, min_group_size=min_group_size),
+        PeerLevel.SECTOR: build_peer_groups(
+            securities,
+            level=PeerLevel.SECTOR,
+            min_group_size=min_group_size,
+        ),
+        PeerLevel.INDUSTRY: build_peer_groups(
+            securities,
+            level=PeerLevel.INDUSTRY,
+            min_group_size=min_group_size,
+        ),
         PeerLevel.SUB_INDUSTRY: build_peer_groups(
             securities,
             level=PeerLevel.SUB_INDUSTRY,

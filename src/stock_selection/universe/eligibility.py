@@ -36,7 +36,10 @@ def evaluate_investability(
         if security.security_type not in effective.allowed_security_types:
             reasons.append("security_type_not_allowed")
 
-        if effective.allowed_currencies is not None and security.currency not in effective.allowed_currencies:
+        if (
+            effective.allowed_currencies is not None
+            and security.currency not in effective.allowed_currencies
+        ):
             reasons.append("currency_not_allowed")
 
         if effective.allowed_exchanges is not None:

@@ -4,7 +4,6 @@ from typer.testing import CliRunner
 
 from stock_selection.cli.main import app
 
-
 runner = CliRunner()
 
 

@@ -14,7 +14,12 @@ class PenaltyContext:
 class PenaltyRule:
     name: str
 
-    def evaluate(self, ticker: str, pillar_scores: dict[str, float], context: PenaltyContext) -> PenaltyTrace | None:
+    def evaluate(
+        self,
+        ticker: str,
+        pillar_scores: dict[str, float],
+        context: PenaltyContext,
+    ) -> PenaltyTrace | None:
         raise NotImplementedError
 
 

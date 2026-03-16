@@ -17,8 +17,11 @@ app = typer.Typer(add_completion=False)
 @app.command()
 def status() -> None:
     settings = load_settings()
+    profile = settings.ranking.default_profile
     print(
-        f"[bold green]stock-selection[/bold green] :: env={settings.app.environment} :: profile={settings.ranking.default_profile}"
+        "[bold green]stock-selection[/bold green] "
+        f":: env={settings.app.environment} "
+        f":: profile={profile}"
     )
 
 

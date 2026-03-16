@@ -23,7 +23,12 @@ def _security(
     exchange: str | None = "NASDAQ",
 ) -> Security:
     classification = None
-    if sector is not None or industry is not None or sub_industry is not None or exchange is not None:
+    if (
+        sector is not None
+        or industry is not None
+        or sub_industry is not None
+        or exchange is not None
+    ):
         classification = Classification(
             sector=sector or "Unknown",
             industry=industry,
@@ -74,10 +79,30 @@ def test_evaluate_investability_returns_exclusion_reasons() -> None:
 
 def test_build_peer_groups_groups_and_sorts_members_deterministically() -> None:
     securities = [
-        _security("MSFT", sector="Information Technology", industry="Software", sub_industry="Application Software"),
-        _security("NVDA", sector="Information Technology", industry="Semiconductors", sub_industry="Semiconductor Devices"),
-        _security("AAPL", sector="Information Technology", industry="Hardware", sub_industry="Consumer Electronics"),
-        _security("LLY", sector="Health Care", industry="Biotechnology", sub_industry="Large Cap Pharma"),
+        _security(
+            "MSFT",
+            sector="Information Technology",
+            industry="Software",
+            sub_industry="Application Software",
+        ),
+        _security(
+            "NVDA",
+            sector="Information Technology",
+            industry="Semiconductors",
+            sub_industry="Semiconductor Devices",
+        ),
+        _security(
+            "AAPL",
+            sector="Information Technology",
+            industry="Hardware",
+            sub_industry="Consumer Electronics",
+        ),
+        _security(
+            "LLY",
+            sector="Health Care",
+            industry="Biotechnology",
+            sub_industry="Large Cap Pharma",
+        ),
     ]
 
     groups = build_peer_groups(securities, level=PeerLevel.SECTOR)
@@ -104,7 +129,14 @@ def test_build_peer_groups_respects_min_group_size() -> None:
 
 
 def test_build_standard_peer_maps_returns_sector_industry_sub_industry() -> None:
-    securities = [_security("MSFT"), _security("NVDA", industry="Semiconductors", sub_industry="Semiconductor Devices")]
+    securities = [
+        _security("MSFT"),
+        _security(
+            "NVDA",
+            industry="Semiconductors",
+            sub_industry="Semiconductor Devices",
+        ),
+    ]
 
     peer_maps = build_standard_peer_maps(securities)
 

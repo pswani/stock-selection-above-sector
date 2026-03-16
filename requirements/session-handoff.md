@@ -1,21 +1,22 @@
 # Session Handoff
 
 ## Completed
-- Finished the remaining Milestone 3 FMP adapter review task by tightening final safe alias coverage in existing ratio-based parsing without changing canonical schemas or unsupported endpoint behavior.
-- Expanded `FinancialModelingPrepProvider` fallback parsing in `src/stock_selection/data/fmp.py`.
-  - Fundamentals now also accept safe non-`TTM` ratio aliases for operating margin, gross margin, and debt-to-equity.
-  - Estimates now also accept safe non-`TTM` ratio aliases for forward PE, price-to-sales, and EV/EBITDA.
-- Added focused unit coverage in `tests/test_fmp_provider.py` for the non-`TTM` ratio alias fallback behavior.
-- Prior Milestone 3 work remains in place: broader fundamentals/estimates alias coverage, explicit unsupported-capability handling, and normalization utility typing/tests.
+- Started Milestone 4 only by implementing a deterministic sector-relative normalization engine in `src/stock_selection/normalize/peer.py`.
+- Added `normalize_by_peer_group(...)` to compute peer-relative winsorized values, percentile ranks, robust z-scores, peer-group sizes, coverage ratios, and explicit normalization statuses.
+  - Status values are `ok`, `missing_peer_group`, `missing_value`, and `insufficient_peer_group`.
+  - Non-finite inputs are treated as missing, and normalized outputs remain null when peer-group membership is missing or valid peer coverage is below the minimum group size.
+- Exported the new normalization entry point from `src/stock_selection/normalize/__init__.py`.
+- Added focused unit coverage in `tests/test_normalize_peer.py` for ties, tiny groups, nulls, outliers, and required-column validation.
+- Kept the existing low-level normalization helpers and prior Milestone 3 provider work unchanged.
 
 ## Current status
-- Milestone 3 is complete.
-- FMP provider coverage now reflects the final reviewed safe alias set for already-supported interfaces, and unsupported endpoint families/non-canonical fields remain explicit.
-- Full pytest and pyright pass in this environment; targeted Ruff passes for the changed files.
-- `uv run ruff check .` still fails due to 5 pre-existing repo-wide UP042 findings outside the completed Milestone 3 scope.
+- Milestone 4 is in progress.
+- The repo now has a standalone peer-group normalization primitive with explicit missing-data behavior and deterministic tests.
+- Targeted normalization tests and pyright pass in this environment; targeted Ruff passes for the changed normalization files.
+- `uv run ruff check .` still fails due to 5 pre-existing repo-wide UP042 findings outside the changed Milestone 4 scope.
 
 ## Next task
-- Start Milestone 4 only by implementing the sector-relative normalization engine with explicit missing-data behavior and focused deterministic tests.
+- Continue Milestone 4 only by defining the narrowest downstream normalization contract and wiring the peer-group normalization engine into its first consumer without starting pillar logic.
 
 ## Known blockers
 - `uv run ruff check .` currently fails on 5 pre-existing UP042 findings in:
@@ -23,18 +24,19 @@
   - `src/stock_selection/models.py`
 
 ## Changed files
-- `src/stock_selection/data/fmp.py`
-- `tests/test_fmp_provider.py`
+- `src/stock_selection/normalize/__init__.py`
+- `src/stock_selection/normalize/peer.py`
+- `tests/test_normalize_peer.py`
+- `docs/architecture.md`
 - `requirements/session-handoff.md`
 - `requirements/decisions.md`
 - `requirements/roadmap.md`
 - `PLANS.md`
 
 ## Validation run
-- `uv run pytest -q tests/test_fmp_provider.py` (passed)
-- `uv run ruff check src/stock_selection/data/fmp.py tests/test_fmp_provider.py` (passed)
-- `uv run pytest -q` (passed)
-- `uv run ruff check .` (failed: 5 pre-existing UP042 violations outside changed Milestone 3 scope)
+- `uv run pytest -q tests/test_normalize_utils.py tests/test_normalize_peer.py` (passed)
+- `uv run ruff check src/stock_selection/normalize tests/test_normalize_utils.py tests/test_normalize_peer.py` (passed)
+- `uv run ruff check .` (failed: 5 pre-existing UP042 violations outside changed Milestone 4 scope)
 - `uv run pyright` (passed: `0 errors`)
 
 ## Exact next prompt
@@ -50,8 +52,8 @@ Read:
 - docs/code_review.md
 
 Then:
-1. start Milestone 4 only by implementing the sector-relative normalization engine
+1. continue Milestone 4 only by defining the narrowest downstream contract for `normalize_by_peer_group(...)` and wiring it into the next normalization consumer without starting pillar logic
 2. keep the implementation deterministic, config-free for now unless docs require otherwise, and explicit about missing-data behavior
-3. add/update focused tests for tiny peer groups, ties, nulls, and outliers in the changed normalization scope
+3. add/update focused tests only for the changed normalization integration path
 4. avoid unrelated refactors
 5. run targeted tests for changed normalization modules plus `uv run ruff check .` and `uv run pyright`, then update handoff/roadmap/decisions/PLANS with results

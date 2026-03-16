@@ -23,3 +23,5 @@
 - FMP fundamentals/estimates parsing now uses explicit safe alias fallbacks via `_first_float(...)` for already-supported canonical fields without expanding schemas.
 - FMP ratio-based fundamentals/estimates parsing also accepts safe non-`TTM` aliases (`operatingProfitMargin`, `grossProfitMargin`, `debtEquityRatio`, `peRatio`, `priceToSalesRatio`, `enterpriseValueMultiple`) when they map directly to existing canonical fields.
 - `normalize.utils.robust_zscore` must return an explicit `pd.Series` to satisfy static typing and keep normalization deterministic.
+- Milestone 4 normalization starts with a DataFrame-based peer-group normalizer that emits winsorized values, percentile ranks, robust z-scores, peer-group coverage, and explicit row status (`ok`, `missing_peer_group`, `missing_value`, `insufficient_peer_group`).
+- Peer-group normalization treats non-finite values as missing and leaves normalized outputs null when peer-group membership is missing or valid peer coverage is below the minimum group size.

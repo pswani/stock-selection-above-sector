@@ -19,6 +19,7 @@ This repository provides an opinionated foundation for a sector-relative stock s
 4. **Normalization layer**
    - Sector-relative normalization
    - Percentiles / z-scores / winsorization
+   - Explicit coverage and missing-data status by peer group
 5. **Scoring layer**
    - Pillar interfaces
    - Composite score assembly

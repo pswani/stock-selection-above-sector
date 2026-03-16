@@ -185,12 +185,52 @@ class FinancialModelingPrepProvider:
                 FundamentalSnapshot(
                     ticker=ticker,
                     as_of=as_of,
-                    revenue_growth_yoy=growth_row.get("revenueGrowth"),
-                    eps_growth_yoy=growth_row.get("epsgrowth"),
-                    operating_margin=ratio_row.get("operatingProfitMarginTTM"),
-                    gross_margin=ratio_row.get("grossProfitMarginTTM"),
-                    return_on_equity=ratio_row.get("returnOnEquityTTM"),
-                    debt_to_equity=ratio_row.get("debtEquityRatioTTM"),
+                    revenue_growth_yoy=_first_float(
+                        growth_row,
+                        (
+                            "revenueGrowth",
+                            "revenueGrowthTTM",
+                            "growthRevenue",
+                        ),
+                    ),
+                    eps_growth_yoy=_first_float(
+                        growth_row,
+                        (
+                            "epsgrowth",
+                            "epsGrowth",
+                            "growthEPS",
+                        ),
+                    ),
+                    operating_margin=_first_float(
+                        ratio_row,
+                        (
+                            "operatingProfitMarginTTM",
+                            "operatingMarginTTM",
+                        ),
+                    ),
+                    gross_margin=_first_float(
+                        ratio_row,
+                        (
+                            "grossProfitMarginTTM",
+                            "grossMarginTTM",
+                        ),
+                    ),
+                    return_on_equity=_first_float(
+                        ratio_row,
+                        (
+                            "returnOnEquityTTM",
+                            "returnOnEquity",
+                            "roeTTM",
+                        ),
+                    ),
+                    debt_to_equity=_first_float(
+                        ratio_row,
+                        (
+                            "debtEquityRatioTTM",
+                            "debtToEquityTTM",
+                            "debtToEquity",
+                        ),
+                    ),
                     free_cash_flow_margin=None,
                     net_debt_to_ebitda=None,
                     diluted_share_count_growth_3y=None,
@@ -211,12 +251,50 @@ class FinancialModelingPrepProvider:
                 EstimateSnapshot(
                     ticker=ticker,
                     as_of=as_of,
-                    forward_pe=ratio_row.get("peRatioTTM"),
-                    peg_ratio=ratio_row.get("pegRatioTTM"),
-                    price_to_sales=ratio_row.get("priceToSalesRatioTTM"),
-                    ev_to_ebitda=ratio_row.get("enterpriseValueMultipleTTM"),
-                    next_year_revenue_growth=estimate_row.get("estimatedRevenueAvg"),
-                    next_year_eps_growth=estimate_row.get("estimatedEpsAvg"),
+                    forward_pe=_first_float(
+                        ratio_row,
+                        (
+                            "peRatioTTM",
+                            "priceEarningsRatioTTM",
+                        ),
+                    ),
+                    peg_ratio=_first_float(
+                        ratio_row,
+                        (
+                            "pegRatioTTM",
+                            "pegRatio",
+                        ),
+                    ),
+                    price_to_sales=_first_float(
+                        ratio_row,
+                        (
+                            "priceToSalesRatioTTM",
+                            "priceToSalesTTM",
+                        ),
+                    ),
+                    ev_to_ebitda=_first_float(
+                        ratio_row,
+                        (
+                            "enterpriseValueMultipleTTM",
+                            "evToEbitdaTTM",
+                        ),
+                    ),
+                    next_year_revenue_growth=_first_float(
+                        estimate_row,
+                        (
+                            "estimatedRevenueGrowth",
+                            "estimatedRevenueAvg",
+                            "estimatedRevenue",
+                        ),
+                    ),
+                    next_year_eps_growth=_first_float(
+                        estimate_row,
+                        (
+                            "estimatedEpsGrowth",
+                            "estimatedEpsAvg",
+                            "estimatedEps",
+                        ),
+                    ),
                     eps_revision_90d=None,
                     revenue_revision_90d=None,
                 )
@@ -287,9 +365,7 @@ class FinancialModelingPrepProvider:
                             as_of=date.fromisoformat(action_date),
                             action_type="dividend",
                             value=_as_float(
-                                row.get("dividend")
-                                or row.get("adjDividend")
-                                or row.get("label")
+                                row.get("dividend") or row.get("adjDividend") or row.get("label")
                             ),
                         )
                     )

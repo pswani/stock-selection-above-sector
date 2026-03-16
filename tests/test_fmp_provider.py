@@ -131,6 +131,51 @@ def test_fmp_provider_parses_price_fundamental_and_estimate_snapshots() -> None:
     assert estimates[0].next_year_eps_growth == 0.15
 
 
+def test_fmp_provider_uses_fundamental_and_estimate_alias_fallbacks() -> None:
+    class FundamentalEstimateAliasStubProvider(FinancialModelingPrepProvider):
+        def __init__(self) -> None:
+            super().__init__(api_key="demo")
+
+        def _get_json(self, path: str, query=None):  # type: ignore[override]
+            if path.startswith("ratios-ttm/"):
+                return [
+                    {
+                        "priceEarningsRatioTTM": "19.5",
+                        "pegRatio": "1.4",
+                        "priceToSalesTTM": "3.9",
+                        "evToEbitdaTTM": "10.2",
+                        "operatingMarginTTM": "0.25",
+                        "grossMarginTTM": "0.61",
+                        "returnOnEquity": "0.18",
+                        "debtToEquity": "0.42",
+                    }
+                ]
+            if path.startswith("financial-growth/"):
+                return [{"growthRevenue": "0.09", "epsGrowth": "0.12"}]
+            if path.startswith("analyst-estimates/"):
+                return [{"estimatedRevenueGrowth": "0.08", "estimatedEpsGrowth": "0.11"}]
+            return []
+
+    provider = FundamentalEstimateAliasStubProvider()
+
+    fundamentals = provider.get_fundamentals(["MSFT"], as_of=date(2026, 1, 31))
+    estimates = provider.get_estimates(["MSFT"], as_of=date(2026, 1, 31))
+
+    assert fundamentals[0].revenue_growth_yoy == 0.09
+    assert fundamentals[0].eps_growth_yoy == 0.12
+    assert fundamentals[0].operating_margin == 0.25
+    assert fundamentals[0].gross_margin == 0.61
+    assert fundamentals[0].return_on_equity == 0.18
+    assert fundamentals[0].debt_to_equity == 0.42
+
+    assert estimates[0].forward_pe == 19.5
+    assert estimates[0].peg_ratio == 1.4
+    assert estimates[0].price_to_sales == 3.9
+    assert estimates[0].ev_to_ebitda == 10.2
+    assert estimates[0].next_year_revenue_growth == 0.08
+    assert estimates[0].next_year_eps_growth == 0.11
+
+
 def test_fmp_provider_builds_peer_groups() -> None:
     provider = StubFmpProvider()
     groups = provider.get_peer_groups(["MSFT", "ADBE"], as_of=date(2026, 1, 31))

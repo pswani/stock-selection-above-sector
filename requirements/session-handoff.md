@@ -29,8 +29,8 @@
 - `tests/test_fmp_provider.py`
 - `tests/test_normalize_utils.py`
 - `requirements/session-handoff.md`
-- `requirements/roadmap.md`
 - `requirements/decisions.md`
+- `requirements/roadmap.md`
 - `PLANS.md`
 
 ## Validation run

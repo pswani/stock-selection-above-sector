@@ -1,5 +1,11 @@
+bootstrap:
+	./scripts/bootstrap.sh
+
+validate-env:
+	./scripts/validate-env.sh
+
 install:
-	uv sync --dev
+	uv sync --dev --frozen
 
 test:
 	uv run pytest -q

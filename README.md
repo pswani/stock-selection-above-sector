@@ -17,11 +17,24 @@ This repo is designed to work well with Codex across multiple computers by keepi
 
 ## Quick start
 ```bash
-uv python install
-uv sync --dev
-uv run pytest -q
+./scripts/bootstrap.sh
 uv run stock-selection status
 ```
+
+## Environment validation
+```bash
+./scripts/validate-env.sh
+```
+
+`validate-env.sh` also performs `uv sync --dev --frozen` so it can run consistently on newly provisioned servers where bootstrap may not have been run yet.
+
+Both scripts are deterministic and intended for fresh server initialization. `bootstrap.sh` uses `.python-version` and `uv.lock` (`uv sync --dev --frozen`) to avoid environment drift, validates runtime packages (`numpy`, `pandas`, `pydantic`, `pydantic_settings`, `scipy`, `sklearn`, `pyyaml`, `typer`, `rich`), and verifies dev tools (`pytest`, `ruff`, `pyright`).
+
+
+## Data provider
+- Primary provider: Financial Modeling Prep (FMP) adapter (`stock_selection.data.FinancialModelingPrepProvider`).
+- Set API key in `.env` as `STOCK_SELECTION_FMP_API_KEY=your_key_here`.
+- Optional base URL override: `STOCK_SELECTION_FMP_BASE_URL=https://financialmodelingprep.com/api/v3`.
 
 ## Suggested first Codex prompt
 Read:

@@ -5,9 +5,12 @@ from typing import Protocol
 
 import pandas as pd
 
+from stock_selection.config import load_env_settings
 from stock_selection.models import (
+    CorporateActionSnapshot,
     EstimateSnapshot,
     FundamentalSnapshot,
+    OwnershipSnapshot,
     PeerGroup,
     PriceBar,
     Security,
@@ -34,5 +37,36 @@ class EstimatesProvider(Protocol):
     def get_estimates(self, tickers: list[str], as_of: date) -> list[EstimateSnapshot]: ...
 
 
+class CorporateActionsProvider(Protocol):
+    def get_corporate_actions(
+        self,
+        tickers: list[str],
+        start: date,
+        end: date,
+    ) -> list[CorporateActionSnapshot]: ...
+
+
+class OwnershipProvider(Protocol):
+    def get_ownership_and_short_interest(
+        self,
+        tickers: list[str],
+        as_of: date,
+    ) -> list[OwnershipSnapshot]: ...
+
+
 def model_list_to_frame(records: list[object]) -> pd.DataFrame:
     return pd.DataFrame([getattr(record, "model_dump")() for record in records])
+
+
+def build_primary_provider():
+    from stock_selection.data.fmp import FinancialModelingPrepProvider
+
+    env = load_env_settings()
+    if not env.stock_selection_fmp_api_key:
+        raise ValueError(
+            "Missing FMP API key. Set STOCK_SELECTION_FMP_API_KEY in your environment or .env file."
+        )
+    return FinancialModelingPrepProvider(
+        api_key=env.stock_selection_fmp_api_key,
+        base_url=env.stock_selection_fmp_base_url,
+    )

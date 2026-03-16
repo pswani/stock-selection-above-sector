@@ -5,3 +5,14 @@
 - Keep weights and thresholds in config files.
 - Keep session continuity in repo files rather than chat history.
 - Use `PLANS.md` for larger multi-session initiatives.
+- Introduce a canonical `FactorDefinition` schema and `FactorRegistry` as milestone-1 contracts for factor metadata and deterministic registration.
+- Include explicit `missing_data_policy` at factor-definition level (`skip_factor` or `drop_security`) to avoid implicit assumptions in later pillar assembly.
+- Universe eligibility is evaluated via `UniverseFilterConfig` with explicit exclusion reasons to keep filtering deterministic and auditable.
+- Peer groups are generated deterministically by classification level with sorted group names and members.
+- Standardize initialization on `scripts/bootstrap.sh` + `scripts/validate-env.sh` using `.python-version` and `uv sync --dev --frozen` for reproducible new-server setup.
+- Environment scripts must assert availability of both runtime dependencies (`pydantic_settings`, `scipy`, `sklearn` included) and development tools (`pytest`, `ruff`, `pyright`) to prevent partial setups.
+- `scripts/validate-env.sh` must be self-contained for fresh servers by including `uv` presence checks and `uv sync --dev --frozen` before validations.
+- Financial Modeling Prep (FMP) is the primary provider adapter; configure credentials through `STOCK_SELECTION_FMP_API_KEY` (and optional `STOCK_SELECTION_FMP_BASE_URL`).
+- Provider contracts now include corporate-actions and ownership/short-interest interfaces; unsupported FMP capabilities must fail explicitly via `FmpProviderUnsupportedCapabilityError` rather than returning invented data.
+
+- FMP unsupported-capability exception class is named `FmpProviderUnsupportedCapabilityError` to satisfy lint rule N818 and keep error semantics explicit.

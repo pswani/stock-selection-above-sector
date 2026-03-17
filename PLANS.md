@@ -157,3 +157,46 @@ Risks / open questions:
 
 Resume prompt:
 - Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", continue Milestone 5 only by wiring the RP score cards into the next smallest consumer or assembly path without starting other pillars, then update handoff/roadmap/decisions after running tests.
+
+---
+
+### 2026-03-16 — Repository Audit Plan
+Status: in_progress
+Owner: Codex
+Related files:
+- `src/stock_selection/scoring/composite.py`
+- `src/stock_selection/scoring/relative_performance.py`
+- `src/stock_selection/cli/main.py`
+- `src/stock_selection/backtest/`
+- `src/stock_selection/explainability/`
+- `tests/`
+
+Objective:
+- Review the repository against the framework docs, fix the single highest-value batch, and leave a prioritized follow-up plan for remaining gaps.
+
+Findings:
+1. Severity `P1`: the initial RP pillar path produced `PillarScoreCard` outputs but was not wired into the existing scoring abstraction, leaving an architecture gap between pillar implementations and consumers.
+   Recommended fix: make `PillarEngine` score cards the primary pillar output and let score maps derive from them.
+   Status: fixed in this session.
+2. Severity `P1`: the scoring pipeline still lacks the next minimal consumer for RP score cards, so the first pillar exists but is not yet assembled into a broader scoring flow.
+   Recommended fix: add the smallest assembly path that consumes RP score cards without introducing other pillars.
+3. Severity `P2`: CLI/export remains sample-data oriented and does not exercise the live deterministic scoring path, which weakens end-to-end confidence.
+   Recommended fix: once RP assembly exists, add a narrow CLI/reporting entry point for deterministic RP outputs from fixtures.
+4. Severity `P2`: explainability and backtest layers are still scaffolds, so framework fidelity to validation/backtesting goals remains partial.
+   Recommended fix: keep these deferred until after pillar assembly, but explicitly preserve anti-bias requirements in later milestones.
+5. Severity `P2`: missing-data semantics for pillar scores currently use a `0.0` fallback when RP normalization cannot produce a percentile; this is explicit but may need refinement when ranking coverage policy is formalized.
+   Recommended fix: revisit only when coverage/min-required-pillar behavior is implemented so policy stays coherent.
+6. Severity `P3`: repo-wide Ruff `UP042` baseline findings continue to obscure changed-scope lint signal.
+   Recommended fix: address the baseline in a dedicated lint batch when brought into scope.
+
+Dependencies:
+1. Completed normalization contract from Milestone 4.
+2. Existing `PillarScoreCard` / composite interfaces in `src/stock_selection/scoring/composite.py`.
+3. Existing RP factor name contract in `src/stock_selection/factors/registry.py`.
+
+Acceptance criteria:
+1. The highest-value batch closes a real architecture or correctness gap rather than adding new scaffolding alone.
+2. The changed path remains deterministic and explicit about missing data.
+3. Focused tests cover the changed RP/scoring integration path.
+4. `uv run pyright` passes and changed-scope Ruff checks pass.
+5. Remaining gaps are documented explicitly in handoff and roadmap files.

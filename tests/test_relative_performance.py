@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from stock_selection.scoring import (
+    RelativePerformancePillarEngine,
     build_relative_performance_observations,
     score_relative_performance,
 )
@@ -64,3 +65,25 @@ def test_relative_performance_keeps_missing_data_explicit() -> None:
     assert by_ticker["CCC"].score == 0.0
     assert by_ticker["CCC"].coverage_ratio is None
     assert by_ticker["CCC"].diagnostics["normalization_status"] == "missing_peer_group"
+
+
+def test_relative_performance_pillar_engine_scores_requested_tickers_only() -> None:
+    engine = RelativePerformancePillarEngine(
+        returns_6m={
+            "AAA": 0.30,
+            "BBB": 0.10,
+            "CCC": 0.20,
+        },
+        peer_groups={
+            "AAA": "sector:tech",
+            "BBB": "sector:tech",
+            "CCC": "sector:tech",
+        },
+    )
+
+    cards = engine.score_cards(["CCC", "AAA"], as_of=date(2026, 1, 31))
+    scores = engine.score(["CCC", "AAA"], as_of=date(2026, 1, 31))
+
+    assert [card.ticker for card in cards] == ["AAA", "CCC"]
+    assert [card.score for card in cards] == pytest.approx([100.0, 50.0])
+    assert scores == {"AAA": 100.0, "CCC": 50.0}

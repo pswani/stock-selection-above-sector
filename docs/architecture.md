@@ -24,6 +24,7 @@ This repository provides an opinionated foundation for a sector-relative stock s
    - Typed normalized-factor outputs plus DataFrame projections derived from them
 5. **Scoring layer**
    - Pillar interfaces
+   - Pillar score cards as the diagnostic scoring contract
    - Composite score assembly
    - Profile-based weighting
 6. **Penalty layer**

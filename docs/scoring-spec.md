@@ -23,7 +23,7 @@ The system assumes six pillars:
 ## Included scaffolding
 - `ScoreRequest` defines as-of date, profile, universe, and optional notes
 - `ScoreContext` carries the request, config profile, and optional trace flags
-- `PillarEngine` is the interface for a pillar implementation
+- `PillarEngine` is the interface for a pillar implementation and now derives score maps from score cards
 - `Scorecard` carries raw pillar scores, weighted score, penalties, and final score
 - `PenaltyTrace` records which rules fired and why
 

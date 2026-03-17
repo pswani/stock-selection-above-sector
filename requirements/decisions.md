@@ -30,3 +30,4 @@
 - Milestone 4 is complete once normalization exposes both a typed normalized-factor contract and deterministic tests for ties, tiny groups, nulls, outliers, direction handling, and frame projection from typed outputs.
 - Milestone 5 starts with a narrow RP path: `build_relative_performance_observations(...)` is the current deterministic factor-construction helper for six-month relative strength, and `score_relative_performance(...)` is the first pillar scorer on top of the normalized-factor contract.
 - The current RP pillar score is the normalized percentile rank of `relative_strength_6m`; when normalization cannot produce a percentile, the score falls back to `0.0` while coverage and `normalization_status` remain explicit in diagnostics.
+- `PillarEngine` now treats score cards as the primary pillar output and derives score maps from them, so RP and future pillars can preserve diagnostics and coverage without maintaining parallel scoring logic.

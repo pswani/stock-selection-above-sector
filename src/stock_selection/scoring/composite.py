@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from stock_selection.config import WeightProfile
-from stock_selection.models import RankingResult
+from stock_selection.models import PillarScoreCard, RankingResult
 from stock_selection.penalties.base import PenaltyContext, PenaltyRule, apply_penalties
 
 REQUIRED_PILLARS = ("RP", "G", "Q", "V", "R", "S")
@@ -39,8 +39,14 @@ class Scorecard:
 class PillarEngine:
     pillar_name: str
 
-    def score(self, tickers: list[str], as_of: date) -> dict[str, float]:
+    def score_cards(self, tickers: list[str], as_of: date) -> list[PillarScoreCard]:
         raise NotImplementedError
+
+    def score(self, tickers: list[str], as_of: date) -> dict[str, float]:
+        return {
+            card.ticker: card.score
+            for card in self.score_cards(tickers=tickers, as_of=as_of)
+        }
 
 
 def weighted_sum(scores: Mapping[str, float], weights: Mapping[str, float]) -> float:

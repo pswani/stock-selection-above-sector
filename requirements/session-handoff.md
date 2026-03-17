@@ -1,17 +1,16 @@
 # Session Handoff
 
 ## Completed
-- Started Milestone 5 with the narrowest end-to-end Relative Performance pillar path on top of the completed normalization contract.
-- Added `src/stock_selection/scoring/relative_performance.py`.
-  - `build_relative_performance_observations(...)` constructs deterministic `relative_strength_6m` factor observations from six-month returns and peer groups.
-  - `score_relative_performance(...)` converts normalized RP observations into `PillarScoreCard` outputs with coverage ratio and explicit diagnostics.
-- Re-exported the RP helpers from `src/stock_selection/scoring/__init__.py`.
-- Added focused RP integration coverage in `tests/test_relative_performance.py` for happy-path percentile scoring and explicit missing-data behavior.
-- Kept the completed normalization contract unchanged.
+- Ran a comprehensive repo review against the baseline docs and recorded a prioritized audit plan in `PLANS.md`.
+- Implemented the highest-value review-and-fix batch in changed scope by closing the architecture gap between RP score cards and the scoring abstraction.
+- Updated `src/stock_selection/scoring/composite.py` so `PillarEngine` now treats score cards as the primary pillar output and derives score maps from them.
+- Extended `src/stock_selection/scoring/relative_performance.py` with `RelativePerformancePillarEngine`, which builds deterministic RP score cards for requested tickers on top of the completed normalization contract.
+- Re-exported the RP engine from `src/stock_selection/scoring/__init__.py`.
+- Expanded focused RP integration tests in `tests/test_relative_performance.py` to cover the new `PillarEngine` path and requested-ticker behavior.
 
 ## Current status
 - Milestone 5 is in progress.
-- The repo now has a working RP path from raw six-month return inputs to `PillarScoreCard` outputs on top of the typed normalization contract.
+- The repo now has a working RP path from raw six-month return inputs to `PillarScoreCard` outputs and a matching `PillarEngine` integration path on top of the typed normalization contract.
 - Targeted RP/normalization tests and pyright pass in this environment; targeted Ruff passes for the changed RP/normalization files.
 - `uv run ruff check .` still fails due to 5 pre-existing repo-wide UP042 findings outside the changed Milestone 5 scope.
 
@@ -24,9 +23,11 @@
   - `src/stock_selection/models.py`
 
 ## Changed files
+- `src/stock_selection/scoring/composite.py`
 - `src/stock_selection/scoring/__init__.py`
 - `src/stock_selection/scoring/relative_performance.py`
 - `tests/test_relative_performance.py`
+- `docs/architecture.md`
 - `docs/scoring-spec.md`
 - `requirements/session-handoff.md`
 - `requirements/decisions.md`
@@ -35,7 +36,8 @@
 
 ## Validation run
 - `uv run pytest -q tests/test_normalize_utils.py tests/test_normalize_peer.py tests/test_normalize_factors.py tests/test_relative_performance.py` (passed)
-- `uv run ruff check src/stock_selection/scoring/__init__.py src/stock_selection/scoring/relative_performance.py src/stock_selection/normalize/__init__.py src/stock_selection/normalize/factors.py src/stock_selection/normalize/peer.py src/stock_selection/factors/__init__.py src/stock_selection/factors/base.py tests/test_normalize_utils.py tests/test_normalize_peer.py tests/test_normalize_factors.py tests/test_relative_performance.py` (passed)
+- `uv run pytest -q tests/test_relative_performance.py tests/test_normalize_utils.py tests/test_normalize_peer.py tests/test_normalize_factors.py tests/test_composite.py` (passed)
+- `uv run ruff check src/stock_selection/scoring/__init__.py src/stock_selection/scoring/composite.py src/stock_selection/scoring/relative_performance.py src/stock_selection/normalize/__init__.py src/stock_selection/normalize/factors.py src/stock_selection/normalize/peer.py src/stock_selection/factors/__init__.py src/stock_selection/factors/base.py tests/test_relative_performance.py tests/test_normalize_utils.py tests/test_normalize_peer.py tests/test_normalize_factors.py tests/test_composite.py` (passed)
 - `uv run ruff check .` (failed: 5 pre-existing UP042 violations outside changed Milestone 5 scope)
 - `uv run pyright` (passed: `0 errors`)
 

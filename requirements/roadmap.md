@@ -4,7 +4,7 @@
 Milestone 5 in progress: Relative Performance pillar end-to-end.
 
 ## Immediate milestones
-1. Continue Milestone 5 by wiring the new RP score cards into the next smallest consumer or assembly path without starting other pillars.
+1. Continue Milestone 5 by wiring the new RP score cards into a broader assembly path without starting other pillars.
 2. Implement remaining pillars incrementally (G, Q, V, R, S).
 3. Wire ranking confidence/missing-data disclosure into result assembly.
 4. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
@@ -19,6 +19,7 @@ Milestone 5 in progress: Relative Performance pillar end-to-end.
 - Milestone 4 is complete: normalization now covers peer-group primitives plus typed normalized-factor outputs and deterministic DataFrame projections with focused tests.
 - Milestone 5 now has a narrow RP path from six-month return inputs to `PillarScoreCard` outputs with explicit diagnostics and coverage.
 - The highest-value review batch is complete: RP now also plugs into the scoring abstraction through `PillarEngine`.
+- The next RP consumer batch is also complete: reporting and CLI can now export actual RP score cards from the implemented path.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

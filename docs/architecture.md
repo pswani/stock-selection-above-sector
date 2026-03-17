@@ -33,6 +33,7 @@ This repository provides an opinionated foundation for a sector-relative stock s
 7. **Ranking and reporting layer**
    - Ranked results
    - Snapshot exports
+   - Pillar score card exports
    - Human-readable reports
 8. **Validation layer**
    - Unit tests

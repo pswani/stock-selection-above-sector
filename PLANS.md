@@ -110,6 +110,7 @@ Milestones:
    - Scope: first complete pillar from factor inputs to normalized pillar score.
    - Acceptance criteria: RP score card produced with diagnostics and coverage ratio.
    - Tests: unit tests + integration test through composite assembly.
+   - Progress: added `src/stock_selection/scoring/relative_performance.py` with a narrow end-to-end RP path. `build_relative_performance_observations(...)` constructs deterministic `relative_strength_6m` factor observations from six-month return inputs and peer groups, and `score_relative_performance(...)` converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage. Focused tests cover happy-path scoring and explicit missing-data behavior. Remaining Milestone 5 work is to wire RP score cards into the next smallest consumer or assembly path without broadening into other pillars.
    - Dependencies: Milestones 1-4.
 
 6. **Milestone 6 — Remaining pillars (G, Q, V, R, S) incremental**
@@ -151,7 +152,8 @@ Risks / open questions:
 - Final factor formulas/threshold calibrations are still pending and must remain config-driven.
 - FMP adapter is now the primary provider entry point; provider-contract expansion is complete, and the next delivery risk shifts to documenting and implementing deterministic peer-relative normalization behavior for small/incomplete groups.
 - The normalized-factor contract is now typed; the next delivery risk is choosing the smallest RP pillar inputs/formulas that use it without prematurely generalizing for later pillars.
+- The current RP implementation maps missing normalized percentiles to score `0.0` with explicit diagnostics; revisit only when broader ranking coverage semantics are specified.
 - Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
 
 Resume prompt:
-- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", start Milestone 5 only by implementing the narrowest end-to-end Relative Performance pillar path on top of the completed normalization contract, then update handoff/roadmap/decisions after running tests.
+- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", continue Milestone 5 only by wiring the RP score cards into the next smallest consumer or assembly path without starting other pillars, then update handoff/roadmap/decisions after running tests.

@@ -1,4 +1,9 @@
-from stock_selection.factors.base import FactorCalculator, FactorInputBundle
+from stock_selection.factors.base import (
+    FactorCalculator,
+    FactorInputBundle,
+    normalize_factor_output,
+    normalized_factor_output_frame,
+)
 from stock_selection.factors.registry import (
     CANONICAL_FACTOR_DEFINITIONS,
     FactorDefinition,
@@ -17,4 +22,6 @@ __all__ = [
     "MissingDataPolicy",
     "PillarName",
     "build_canonical_registry",
+    "normalize_factor_output",
+    "normalized_factor_output_frame",
 ]

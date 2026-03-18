@@ -92,23 +92,25 @@ Milestones:
    - Tests: unit tests for filters and mapping edge cases.
    - Dependencies: Milestone 1.
 
-3. **Milestone 3 — Provider contracts expansion (current)**
+3. **Milestone 3 — Provider contracts expansion (completed)**
    - Scope: extend provider interfaces for prices/returns/volume, corporate actions, fundamentals, estimates/revisions, ownership/short-interest (optional availability).
    - Acceptance criteria: typed provider interfaces and fixtures; unsupported datasets reported explicitly.
    - Tests: interface fixture tests + missing-data behavior tests.
-   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage now includes split ratio strings (`a:b`, `a/b`) and additional ownership/short-interest percentage aliases, while unsupported endpoint families still fail explicitly. Tests cover supported/missing/unsupported paths, including additional safe fundamentals/estimates alias fallbacks. Full local validation now runs (`uv sync --dev`, `uv run pytest -q`, `uv run pyright`), and remaining blocker is 5 pre-existing repo-wide Ruff UP042 findings outside active Milestone 3 scope.
+   - Progress: FMP primary adapter now implements securities/prices/fundamentals/estimates/peer-groups plus supported corporate-actions and ownership/short-interest retrieval. Field coverage includes split ratio strings (`a:b`, `a/b`), percentage ownership/short-interest aliases, broader fundamentals/estimates aliases, and final safe non-`TTM` ratio fallbacks for already-supported canonical fields. Tests cover supported/missing/unsupported paths and alias fallback behavior. Full local validation passes for pytest and pyright; remaining blocker is 5 pre-existing repo-wide Ruff UP042 findings outside Milestone 3 scope.
    - Dependencies: Milestones 1-2.
 
-4. **Milestone 4 — Sector-relative normalization engine**
+4. **Milestone 4 — Sector-relative normalization engine (completed)**
    - Scope: peer-relative percentile/z-score normalization with robust missing-data handling.
    - Acceptance criteria: deterministic normalized outputs for fixed fixtures and peer groups.
    - Tests: unit tests covering tiny peer groups, ties, nulls, outliers.
+   - Progress: added a DataFrame-based peer-group normalization engine in `src/stock_selection/normalize/peer.py` that computes winsorized values, percentile ranks, robust z-scores, peer-group size/coverage, and explicit row statuses for missing peer groups, missing values, and insufficient valid peers. Added `src/stock_selection/normalize/factors.py` as the downstream factor consumer: it accepts `FactorObservation` records, applies direction-aware normalization (`LOWER_IS_BETTER` values are sign-flipped into `oriented_value`), and returns typed `NormalizedFactorObservation` outputs plus deterministic DataFrame projections. Focused tests now cover ties, tiny groups, nulls, outliers, required-column validation, factor-output integration, and frame projection from typed outputs.
    - Dependencies: Milestones 1-3.
 
-5. **Milestone 5 — Relative Performance (RP) pillar end-to-end**
+5. **Milestone 5 — Relative Performance (RP) pillar end-to-end (completed)**
    - Scope: first complete pillar from factor inputs to normalized pillar score.
    - Acceptance criteria: RP score card produced with diagnostics and coverage ratio.
    - Tests: unit tests + integration test through composite assembly.
+   - Progress: added `src/stock_selection/scoring/relative_performance.py` with a narrow end-to-end RP path. `build_relative_performance_observations(...)` constructs deterministic `relative_strength_6m` factor observations from six-month return inputs and peer groups, `score_relative_performance(...)` converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage, and `RelativePerformancePillarEngine` now plugs RP into the scoring abstraction. Reporting/CLI now have a deterministic consumer for RP score cards through `pillar_score_cards_to_frame(...)`, `write_pillar_score_cards_csv(...)`, and `export-sample-relative-performance`. The broader assembly seam is implemented via `assemble_pillar_score_cards(...)`, which groups available pillar score cards per ticker, preserves per-pillar coverage/diagnostics, and marks `insufficient_pillars` explicitly when `min_required_pillars` is not met. Reporting can project these partial assemblies through `pillar_score_assemblies_to_frame(...)` and `write_pillar_score_assemblies_csv(...)`. Milestone 5 now also includes a ranking-adjacent preview consumer through `rank_relative_performance_assemblies(...)`, `relative_performance_preview_ranks_to_frame(...)`, `write_relative_performance_preview_csv(...)`, and `export-sample-relative-performance-preview`. Focused tests cover happy-path scoring, explicit missing-data behavior, requested-ticker engine behavior, partial assembly behavior, preview ranking determinism, reporting, and CLI export.
    - Dependencies: Milestones 1-4.
 
 6. **Milestone 6 — Remaining pillars (G, Q, V, R, S) incremental**
@@ -148,8 +150,71 @@ Validation per milestone:
 
 Risks / open questions:
 - Final factor formulas/threshold calibrations are still pending and must remain config-driven.
-- FMP adapter is now the primary provider entry point; remaining Milestone 3 work is final review for any additional safe alias coverage in existing interfaces without expanding canonical schemas or inventing data.
+- FMP adapter is now the primary provider entry point; provider-contract expansion is complete, and the next delivery risk shifts to documenting and implementing deterministic peer-relative normalization behavior for small/incomplete groups.
+- The normalized-factor contract is now typed; the next delivery risk is choosing the smallest RP pillar inputs/formulas that use it without prematurely generalizing for later pillars.
+- The current RP implementation maps missing normalized percentiles to score `0.0` with explicit diagnostics; revisit only when broader ranking coverage semantics are specified.
 - Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
 
 Resume prompt:
-- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", start the next incomplete milestone only, and update handoff/roadmap/decisions after running tests.
+- Continue the active plan in `PLANS.md` at "2026-03-16 — Full stock-selection framework implementation", continue Milestone 5 only by wiring the RP score cards into the next smallest consumer or assembly path without starting other pillars, then update handoff/roadmap/decisions after running tests.
+
+---
+
+### 2026-03-16 — Repository Audit Plan
+Status: in_progress
+Owner: Codex
+Related files:
+- `src/stock_selection/scoring/composite.py`
+- `src/stock_selection/scoring/relative_performance.py`
+- `src/stock_selection/cli/main.py`
+- `src/stock_selection/backtest/`
+- `src/stock_selection/explainability/`
+- `tests/`
+
+Objective:
+- Review the repository against the framework docs, fix the single highest-value batch, and leave a prioritized follow-up plan for remaining gaps.
+
+Findings:
+1. Severity `P1`: the initial RP pillar path produced `PillarScoreCard` outputs but was not wired into the existing scoring abstraction, leaving an architecture gap between pillar implementations and consumers.
+   Recommended fix: make `PillarEngine` score cards the primary pillar output and let score maps derive from them.
+   Status: fixed in this session.
+2. Severity `P1`: the scoring pipeline still lacks the next minimal consumer for RP score cards, so the first pillar exists but is not yet assembled into a broader scoring flow.
+   Recommended fix: add the smallest assembly or reporting consumer that consumes RP score cards without introducing other pillars.
+   Status: fixed in changed scope via reporting/CLI export, explicit partial pillar assembly, and RP preview ranking consumer.
+3. Severity `P2`: CLI/export remains sample-data oriented and does not exercise the live deterministic scoring path, which weakens end-to-end confidence.
+   Recommended fix: add a narrow CLI/reporting entry point for deterministic RP outputs from fixtures.
+   Status: fixed in changed scope for RP via `export-sample-relative-performance`.
+4. Severity `P2`: explainability and backtest layers are still scaffolds, so framework fidelity to validation/backtesting goals remains partial.
+   Recommended fix: keep these deferred until after pillar assembly, but explicitly preserve anti-bias requirements in later milestones.
+5. Severity `P2`: missing-data semantics for pillar scores currently use a `0.0` fallback when RP normalization cannot produce a percentile; this is explicit but may need refinement when ranking coverage policy is formalized.
+   Recommended fix: revisit only when coverage/min-required-pillar behavior is implemented so policy stays coherent.
+   Status: unchanged.
+6. Severity `P3`: repo-wide Ruff `UP042` baseline findings continue to obscure changed-scope lint signal.
+   Recommended fix: address the baseline in a dedicated lint batch when brought into scope.
+   Status: unchanged.
+7. Severity `P2`: config validation was too permissive for the existing scoring contract, allowing invalid pillar-weight maps to survive until later scoring code.
+   Recommended fix: validate required pillar coverage, non-negative weights, and positive total weight at config-load time with clearer errors.
+   Status: fixed in this session.
+8. Severity `P3`: reporting exports had under-specified empty/dynamic-column behavior, which weakened determinism for CSV contracts.
+   Recommended fix: use stable base schemas and deterministic dynamic-column ordering.
+   Status: fixed in this session.
+
+Dependencies:
+1. Completed normalization contract from Milestone 4.
+2. Existing `PillarScoreCard` / composite interfaces in `src/stock_selection/scoring/composite.py`.
+3. Existing RP factor name contract in `src/stock_selection/factors/registry.py`.
+
+Acceptance criteria:
+1. The highest-value batch closes a real architecture or correctness gap rather than adding new scaffolding alone.
+2. The changed path remains deterministic and explicit about missing data.
+3. Focused tests cover the changed RP/scoring integration path.
+4. `uv run pyright` passes and changed-scope Ruff checks pass.
+5. Remaining gaps are documented explicitly in handoff and roadmap files.
+
+Latest progress:
+1. Added `requirements/framework-primary-source.pdf` as the stored primary framework source for future sessions.
+2. Hardened `src/stock_selection/config.py` so invalid scoring profiles fail earlier with clearer messages.
+3. Hardened `src/stock_selection/reporting.py` so ranking and pillar exports keep deterministic dynamic columns and explicit empty schemas.
+4. Added focused regression tests in `tests/test_config.py` and `tests/test_reporting.py`.
+5. Added deterministic partial assembly for pillar score cards in `src/stock_selection/scoring/composite.py` plus reporting projections for that assembly.
+6. Completed Milestone 5 by adding an RP-only preview ranking/export consumer on top of the partial assemblies.

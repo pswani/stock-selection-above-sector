@@ -111,6 +111,32 @@ class FactorObservation(BaseModel):
     source: str | None = None
 
 
+class NormalizedFactorObservation(BaseModel):
+    ticker: str
+    factor_name: str
+    direction: MetricDirection
+    peer_group: str | None = None
+    as_of: date | None = None
+    source: str | None = None
+    raw_value: float | None = None
+    oriented_value: float | None = None
+    winsorized_value: float | None = None
+    percentile_rank: float | None = Field(default=None, ge=0, le=100)
+    robust_zscore: float | None = None
+    peer_group_size: int = Field(ge=0)
+    peer_group_valid_size: int = Field(ge=0)
+    coverage_ratio: float | None = Field(default=None, ge=0, le=1)
+    normalization_status: str
+
+    @field_validator("peer_group_valid_size")
+    @classmethod
+    def valid_size_not_above_group_size(cls, value: int, info):
+        group_size = info.data.get("peer_group_size")
+        if group_size is not None and value > group_size:
+            raise ValueError("peer_group_valid_size cannot exceed peer_group_size")
+        return value
+
+
 class PillarScoreCard(BaseModel):
     ticker: str
     pillar: str

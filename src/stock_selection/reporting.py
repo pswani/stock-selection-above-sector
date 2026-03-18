@@ -7,6 +7,7 @@ import pandas as pd
 
 from stock_selection.models import PillarScoreCard, RankingResult
 from stock_selection.scoring.composite import PillarScoreAssembly
+from stock_selection.scoring.relative_performance import RelativePerformancePreviewRank
 
 PILLAR_SCORE_CARD_BASE_COLUMNS = [
     "ticker",
@@ -32,6 +33,16 @@ PILLAR_ASSEMBLY_BASE_COLUMNS = [
     "meets_minimum_pillars",
     "assembly_status",
     "missing_pillars",
+]
+RP_PREVIEW_BASE_COLUMNS = [
+    "ticker",
+    "as_of",
+    "preview_rank",
+    "score",
+    "assembly_status",
+    "meets_minimum_pillars",
+    "missing_pillars",
+    "ranking_status",
 ]
 
 
@@ -119,6 +130,26 @@ def pillar_score_assemblies_to_frame(
     return pd.DataFrame(rows, columns=columns)
 
 
+def relative_performance_preview_ranks_to_frame(
+    preview_ranks: list[RelativePerformancePreviewRank],
+) -> pd.DataFrame:
+    rows = []
+    for preview in preview_ranks:
+        rows.append(
+            {
+                "ticker": preview.ticker,
+                "as_of": preview.as_of.isoformat() if preview.as_of is not None else None,
+                "preview_rank": preview.preview_rank,
+                "score": preview.score,
+                "assembly_status": preview.assembly_status,
+                "meets_minimum_pillars": preview.meets_minimum_pillars,
+                "missing_pillars": ",".join(preview.missing_pillars),
+                "ranking_status": preview.ranking_status,
+            }
+        )
+    return pd.DataFrame(rows, columns=RP_PREVIEW_BASE_COLUMNS)
+
+
 def write_ranking_csv(results: list[RankingResult], path: str | Path) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -140,6 +171,16 @@ def write_pillar_score_assemblies_csv(
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     pillar_score_assemblies_to_frame(assemblies).to_csv(output, index=False)
+    return output
+
+
+def write_relative_performance_preview_csv(
+    preview_ranks: list[RelativePerformancePreviewRank],
+    path: str | Path,
+) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    relative_performance_preview_ranks_to_frame(preview_ranks).to_csv(output, index=False)
     return output
 
 

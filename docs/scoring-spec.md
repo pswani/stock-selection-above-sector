@@ -30,6 +30,4 @@ The system assumes six pillars:
 ## Current status
 This repo includes interfaces, typed models, and baseline composite / penalty orchestration. Full factor formulas remain intentionally incomplete so Codex can implement them milestone by milestone.
 Milestone 4 now includes a complete normalization handoff from `FactorObservation` outputs into typed normalized factor observations, with deterministic DataFrame projections available for downstream consumers before any pillar scoring is applied.
-Milestone 5 has now started with an end-to-end Relative Performance path that builds `relative_strength_6m` factor observations and converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage.
-The current RP path is now consumable through reporting and CLI sample export without introducing other pillars.
-Milestone 5 now also includes a deterministic partial-assembly step: `assemble_pillar_score_cards(...)` groups pillar score cards by ticker, preserves per-pillar diagnostics/coverage, and marks insufficient-pillar status explicitly instead of inventing a full multi-pillar ranking.
+Milestone 5 is now complete for Relative Performance: the RP path builds `relative_strength_6m` factor observations, converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage, groups those score cards into deterministic partial assemblies, and exposes an RP-only preview ranking/export path that remains explicit about incomplete multi-pillar coverage.

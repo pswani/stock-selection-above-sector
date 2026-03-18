@@ -6,13 +6,16 @@ from stock_selection.reporting import (
     pillar_score_assemblies_to_frame,
     pillar_score_cards_to_frame,
     ranking_results_to_frame,
+    relative_performance_preview_ranks_to_frame,
     write_pillar_score_assemblies_csv,
     write_pillar_score_cards_csv,
     write_ranking_csv,
+    write_relative_performance_preview_csv,
 )
 from stock_selection.scoring import (
     RelativePerformancePillarEngine,
     assemble_pillar_score_cards,
+    rank_relative_performance_assemblies,
 )
 
 
@@ -162,5 +165,45 @@ def test_write_pillar_score_assemblies_csv(tmp_path: Path) -> None:
     assemblies = assemble_pillar_score_cards(cards, min_required_pillars=1)
 
     path = write_pillar_score_assemblies_csv(assemblies, tmp_path / "assembly.csv")
+
+    assert path.exists()
+
+
+def test_relative_performance_preview_ranks_to_frame() -> None:
+    engine = RelativePerformancePillarEngine(
+        returns_6m={"AAA": 0.30, "BBB": 0.10},
+        peer_groups={"AAA": "sector:tech", "BBB": "sector:tech"},
+    )
+    cards = engine.score_cards(["AAA", "BBB"], as_of=date(2026, 1, 31))
+    assemblies = assemble_pillar_score_cards(cards, min_required_pillars=1)
+    preview = rank_relative_performance_assemblies(assemblies)
+
+    frame = relative_performance_preview_ranks_to_frame(preview)
+
+    assert frame.columns.tolist() == [
+        "ticker",
+        "as_of",
+        "preview_rank",
+        "score",
+        "assembly_status",
+        "meets_minimum_pillars",
+        "missing_pillars",
+        "ranking_status",
+    ]
+    assert frame.loc[0, "ranking_status"] == "preview_ranked"
+
+
+def test_write_relative_performance_preview_csv(tmp_path: Path) -> None:
+    engine = RelativePerformancePillarEngine(
+        returns_6m={"AAA": 0.30, "BBB": 0.10},
+        peer_groups={"AAA": "sector:tech", "BBB": "sector:tech"},
+    )
+    preview = engine.preview_rankings(
+        ["AAA", "BBB"],
+        as_of=date(2026, 1, 31),
+        min_required_pillars=2,
+    )
+
+    path = write_relative_performance_preview_csv(preview, tmp_path / "rp-preview.csv")
 
     assert path.exists()

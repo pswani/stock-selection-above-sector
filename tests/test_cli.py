@@ -25,3 +25,13 @@ def test_export_sample_relative_performance(tmp_path: Path) -> None:
     result = runner.invoke(app, ["export-sample-relative-performance", "--output", str(out)])
     assert result.exit_code == 0
     assert out.exists()
+
+
+def test_export_sample_relative_performance_preview(tmp_path: Path) -> None:
+    out = tmp_path / "sample-rp-preview.csv"
+    result = runner.invoke(
+        app,
+        ["export-sample-relative-performance-preview", "--output", str(out)],
+    )
+    assert result.exit_code == 0
+    assert out.exists()

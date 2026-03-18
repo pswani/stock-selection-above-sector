@@ -1,14 +1,14 @@
 # Roadmap
 
 ## Current phase
-Milestone 5 in progress: Relative Performance pillar end-to-end.
+Milestone 5 complete; Milestone 6 next: remaining pillars incremental.
 
 ## Immediate milestones
-1. Continue Milestone 5 by wiring the new RP score cards into a broader assembly path without starting other pillars.
-2. Implement remaining pillars incrementally (G, Q, V, R, S).
+1. Start Milestone 6 by implementing the narrowest Growth pillar path on top of the completed normalization and partial-assembly contracts.
+2. Implement the remaining pillars incrementally (Q, V, R, S) after Growth.
 3. Wire ranking confidence/missing-data disclosure into result assembly.
 4. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
-5. Keep the new normalized-factor contract stable as pillar work begins.
+5. Keep the normalized-factor and partial-assembly contracts stable as additional pillars begin.
 
 ## Cross-cutting readiness
 - The re-uploaded framework PDF is now stored at `requirements/framework-primary-source.pdf` and should be treated as the more specific requirements source when it can be inspected reliably.
@@ -23,6 +23,7 @@ Milestone 5 in progress: Relative Performance pillar end-to-end.
 - The next RP consumer batch is also complete: reporting and CLI can now export actual RP score cards from the implemented path.
 - The latest hardening batch is complete for current scope: config loading now validates profile names and pillar-weight shape more strictly, and reporting exports use deterministic dynamic column ordering with explicit empty schemas.
 - The next broader RP assembly step is now complete: RP score cards can be grouped into deterministic per-ticker partial assemblies with explicit `insufficient_pillars` behavior and reporting projections, without starting other pillars or inventing final rankings.
+- Milestone 5 is now complete: RP also has a ranking-adjacent preview consumer through `rank_relative_performance_assemblies(...)`, `relative_performance_preview_ranks_to_frame(...)`, `write_relative_performance_preview_csv(...)`, and `export-sample-relative-performance-preview`.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

@@ -177,3 +177,27 @@ Do not:
 - mix unrelated cleanup with milestone work
 - silently change formulas or thresholds
 - over-engineer prematurely
+
+## Commit policy
+At the end of every non-trivial completed task:
+- review the final diff against `AGENTS.md` and `docs/code_review.md`
+- create a git commit if the task scope is complete and coherent
+- do not commit partial or mixed-purpose work
+- do not push unless explicitly asked by the user
+
+Before committing:
+- run the relevant checks for changed scope
+- fix defects found in changed scope where practical
+- if any checks still fail or cannot run, document that clearly in `requirements/session-handoff.md`
+
+Commit requirements:
+- use Conventional Commits style
+- keep the commit narrowly scoped to the completed task
+- make the subject specific to the milestone, audit batch, or fix performed
+
+In the final response:
+- state whether a commit was created
+- provide the exact commit message
+- summarize tests/checks run
+- state remaining issues
+- provide the exact next resume prompt

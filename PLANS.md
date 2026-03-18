@@ -117,6 +117,7 @@ Milestones:
    - Scope: implement one pillar per sub-step with explicit formulas and missing-data behavior.
    - Acceptance criteria: all six pillars produce deterministic score cards with traces.
    - Tests: per-pillar unit tests and integration checks.
+   - Progress: Milestone 6 has started with a narrow Growth slice in `src/stock_selection/scoring/growth.py`. `build_growth_observations(...)` derives `revenue_growth_yoy` factor observations from `FundamentalSnapshot` inputs, `score_growth(...)` converts normalized outputs into `PillarScoreCard` results with explicit diagnostics and coverage, and `GrowthPillarEngine` provides the same engine contract as the existing RP path. Focused tests cover happy-path scoring, explicit missing/stale-data handling, requested-ticker engine behavior, and mixed `RP` + `G` partial assembly without inventing a final ranking path.
    - Dependencies: Milestones 1-5.
 
 7. **Milestone 7 — Rule-based penalties and regime sensitivity**
@@ -265,11 +266,13 @@ Findings:
    Acceptance criteria:
    - new pillar paths remain deterministic and explicit about missing data
    - sample-only ranking paths are either clearly labeled or replaced when real multi-pillar assembly exists
+   Status: partially remediated on 2026-03-17. A narrow deterministic Growth pillar slice now exists alongside RP, but Q/V/R/S and any true multi-pillar ranking path are still open.
 4. Severity `P2`: explainability and backtest layers remain scaffolds, so validation-safety requirements from the docs are still mostly documented rather than implemented.
    Recommended fix: keep these deferred until later milestones, but continue treating look-ahead, turnover, cost, and benchmark alignment as explicit acceptance criteria before any validation claims.
    Dependencies: broader scoring and ranking pipeline.
    Acceptance criteria:
    - no code or docs imply backtest fidelity beyond the current scaffolded behavior
+   Status: partially remediated on 2026-03-17. Repo docs and module docstrings now state the current scaffold limits explicitly, but the layers remain functionally thin.
 5. Severity `P3`: repo-wide Ruff still fails on two remaining `UP042` enum findings in `src/stock_selection/factors/registry.py`.
    Recommended fix: convert those enums to `StrEnum` in a dedicated lint batch.
    Dependencies: none.
@@ -346,5 +349,5 @@ Recommended first batch:
 4. Status: completed on 2026-03-17. Latest-only timing semantics are now explicit in the provider contract and FMP adapter, with focused regression tests.
 
 Recommended next batch:
-1. Fix `AUDIT-003` only.
-2. Keep the change scoped to the narrowest next pillar path without inventing final multi-pillar ranking behavior.
+1. Continue `AUDIT-003` only by implementing the narrowest next pillar path after Growth.
+2. Keep the change scoped to one pillar without inventing final multi-pillar ranking behavior.

@@ -1,13 +1,14 @@
 # Roadmap
 
 ## Current phase
-Milestone 5 complete; Milestone 6 remains next for feature work, and the immediate review-driven CLI contract hardening batch is complete.
+Milestone 5 is complete and Milestone 6 is now in progress with a narrow Growth slice added; true multi-pillar ranking is still deferred.
 
 ## Immediate milestones
-1. Start Milestone 6 by implementing the narrowest Growth pillar path on top of the completed normalization and partial-assembly contracts.
-2. Implement the remaining pillars incrementally (Q, V, R, S) after Growth.
+1. Continue Milestone 6 by implementing the next narrowest pillar after Growth (Q, V, R, or S) on top of the completed normalization and partial-assembly contracts.
+2. Implement the remaining pillars incrementally after that.
 3. Wire ranking confidence/missing-data disclosure into result assembly.
-4. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
+4. Keep validation/backtest and explainability layers explicit about scaffold status until real behavior is implemented.
+5. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
 
 ## Cross-cutting readiness
 - The re-uploaded framework PDF is now stored at `requirements/framework-primary-source.pdf` and should be treated as the more specific requirements source when it can be inspected reliably.
@@ -27,7 +28,9 @@ Milestone 5 complete; Milestone 6 remains next for feature work, and the immedia
 - Milestone 5 is now complete: RP also has a ranking-adjacent preview consumer through `rank_relative_performance_assemblies(...)`, `relative_performance_preview_ranks_to_frame(...)`, `write_relative_performance_preview_csv(...)`, and `export-sample-relative-performance-preview`.
 - The latest review batch is complete: provider security listings no longer invent sector data, and investability gating now distinguishes peer classification from exchange-only metadata.
 - The latest audit batch is now complete: the misleading sample ranking export is replaced by an explicit public `export-demo-ranking` command, the old name remains only as a hidden deprecated alias, and RP CLI exports now declare themselves pipeline-backed while preview output remains explicit about not being final multi-pillar ranking.
-- The top open review-driven gap is now broader framework incompleteness beyond the RP slice, followed by explainability/backtest scaffolding and the repo-wide Ruff baseline.
+- Milestone 6 has started with a deterministic Growth pillar slice built from `FundamentalSnapshot.revenue_growth_yoy`, plus focused assembly coverage showing `G` can coexist with `RP` without claiming a final multi-pillar ranking.
+- Validation and explainability scaffolds now state their current limits explicitly in repo docs and module docstrings so they are less likely to be mistaken for production-ready backtesting or explainability layers.
+- The top open review-driven gap remains broader framework incompleteness beyond the `RP` and `G` slices, followed by scaffolded validation/explainability depth and the repo-wide Ruff baseline.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

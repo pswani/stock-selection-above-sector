@@ -38,6 +38,7 @@
 - Recommended fix: Continue milestone work incrementally, starting with the narrowest Growth pillar path while preserving the current normalization and partial-assembly contracts.
 - Test expectation: Each new pillar should add focused factor, normalization-integration, scoring, and partial-assembly tests.
 - Dependencies: Current Milestone 4 and Milestone 5 contracts.
+- Status: Partially remediated on 2026-03-17. The repo now includes a narrow deterministic Growth pillar slice built from `revenue_growth_yoy`, plus focused tests and mixed `RP` + `G` partial-assembly coverage. Quality, Valuation, Risk, Sentiment, and any true multi-pillar ranking path remain open.
 
 ### AUDIT-004 — Explainability and backtest layers are still scaffolds
 - Severity: Medium
@@ -48,6 +49,7 @@
 - Recommended fix: Keep these deferred, but preserve them as explicit later milestones with anti-bias acceptance criteria before any validation claims are made.
 - Test expectation: Add snapshot and validation tests only when these layers gain real behavior.
 - Dependencies: Broader scoring and ranking pipeline.
+- Status: Partially remediated on 2026-03-17. The scaffold limits are now explicit in repo docs and module docstrings, but the layers remain intentionally thin until later milestones add real validation and explainability behavior.
 
 ### AUDIT-005 — RP missing-data scoring policy is explicit but still provisional
 - Severity: Medium

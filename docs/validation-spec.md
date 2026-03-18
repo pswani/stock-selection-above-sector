@@ -16,3 +16,8 @@ Add snapshot-style comparisons when:
 - live market integration validation
 - production backtest benchmarking
 - full data quality monitoring
+
+## Current scaffold limits
+- `src/stock_selection/backtest/snapshots.py` writes deterministic snapshot files only; it is not a validated backtest engine.
+- `src/stock_selection/explainability/models.py` provides placeholder explanation-card schemas only; it is not yet a full explainability contract.
+- Until later milestones add turnover, transaction costs, benchmark alignment, and timing-safe data contracts, no repo output should be described as production-ready validation or backtest evidence.

@@ -1,3 +1,11 @@
+"""Snapshot-only helpers for reporting intermediate ranking artifacts.
+
+These utilities write deterministic CSV outputs for inspection, but they do not
+constitute a full backtest harness. Turnover, transaction costs, benchmark
+alignment, and point-in-time execution safety remain out of scope here until
+Milestone 9.
+"""
+
 from __future__ import annotations
 
 from datetime import date

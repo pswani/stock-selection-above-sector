@@ -40,6 +40,30 @@ class PenaltyProfile(BaseModel):
     max_total_penalty: float = Field(ge=0)
     rules: dict[str, float] = Field(default_factory=dict)
 
+    @field_validator("rules")
+    @classmethod
+    def validate_rules(cls, value: dict[str, float]) -> dict[str, float]:
+        normalized: dict[str, float] = {}
+        invalid_names: list[str] = []
+
+        for rule_name, weight in value.items():
+            normalized_name = rule_name.strip()
+            if not normalized_name:
+                invalid_names.append(rule_name)
+                continue
+            normalized[normalized_name] = float(weight)
+
+        if invalid_names:
+            raise ValueError("penalty rule names must not be blank")
+
+        negative = sorted(name for name, weight in normalized.items() if weight < 0)
+        if negative:
+            raise ValueError(
+                "penalty rule weights must be non-negative "
+                f"(negative={negative})"
+            )
+        return normalized
+
 
 class WeightProfile(BaseModel):
     name: str
@@ -114,15 +138,18 @@ def load_yaml(path: str | Path) -> dict[str, Any]:
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
 
-    with config_path.open("r", encoding="utf-8") as handle:
-        payload = yaml.safe_load(handle)
+    try:
+        with config_path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle)
+    except yaml.YAMLError as exc:
+        raise ValueError(f"Invalid YAML in config file: {config_path}") from exc
 
     if payload is None:
         return {}
     if not isinstance(payload, dict):
         raise ValueError(
-            "Config file must contain a top-level mapping: "
-            f"{config_path}"
+            "Config file must contain a top-level mapping "
+            f"(got {type(payload).__name__}): {config_path}"
         )
     return payload
 

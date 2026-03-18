@@ -1,29 +1,29 @@
 from __future__ import annotations
 
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class Currency(str, Enum):
+class Currency(StrEnum):
     USD = "USD"
     INR = "INR"
 
 
-class SecurityType(str, Enum):
+class SecurityType(StrEnum):
     COMMON_STOCK = "common_stock"
     ADR = "adr"
     ETF = "etf"
 
 
-class MetricDirection(str, Enum):
+class MetricDirection(StrEnum):
     HIGHER_IS_BETTER = "higher_is_better"
     LOWER_IS_BETTER = "lower_is_better"
 
 
 class Classification(BaseModel):
-    sector: str
+    sector: str | None = None
     industry_group: str | None = None
     industry: str | None = None
     sub_industry: str | None = None

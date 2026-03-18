@@ -30,7 +30,7 @@ def test_load_yaml_rejects_non_mapping_root(tmp_path: Path) -> None:
 
     from stock_selection.config import load_yaml
 
-    with pytest.raises(ValueError, match="top-level mapping"):
+    with pytest.raises(ValueError, match="top-level mapping .*got list"):
         load_yaml(path)
 
 
@@ -81,3 +81,48 @@ def test_load_weight_profile_rejects_non_positive_total_weight(tmp_path: Path) -
 
     with pytest.raises(ValidationError, match="total weight must be positive"):
         load_weight_profile("zero", root=tmp_path)
+
+
+def test_load_yaml_reports_invalid_yaml_with_file_path(tmp_path: Path) -> None:
+    path = tmp_path / "broken.yaml"
+    path.write_text("app:\n  name: test\n  bad: [\n", encoding="utf-8")
+
+    from stock_selection.config import load_yaml
+
+    with pytest.raises(ValueError, match=f"Invalid YAML in config file: {path}"):
+        load_yaml(path)
+
+
+def test_load_yaml_reports_missing_file_path(tmp_path: Path) -> None:
+    path = tmp_path / "missing.yaml"
+
+    from stock_selection.config import load_yaml
+
+    with pytest.raises(FileNotFoundError, match=f"Config file not found: {path}"):
+        load_yaml(path)
+
+
+def test_load_weight_profile_rejects_negative_penalty_rule_weights(tmp_path: Path) -> None:
+    profile_path = tmp_path / "invalid.yaml"
+    profile_path.write_text(
+        "\n".join(
+            [
+                "name: invalid",
+                "pillar_weights:",
+                "  RP: 20",
+                "  G: 20",
+                "  Q: 20",
+                "  V: 20",
+                "  R: 10",
+                "  S: 10",
+                "penalties:",
+                "  max_total_penalty: 10",
+                "  rules:",
+                "    minimum_quality: -1",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError, match="penalty rule weights must be non-negative"):
+        load_weight_profile("invalid", root=tmp_path)

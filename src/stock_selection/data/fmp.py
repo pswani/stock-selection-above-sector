@@ -110,8 +110,13 @@ class FinancialModelingPrepProvider:
             raise FmpProviderError(f"Invalid JSON response for {path}") from exc
 
     def list_securities(self, as_of: date) -> list[Security]:
-        # FMP list endpoint does not support point-in-time snapshots.
-        # It returns the latest tradable list.
+        """Return the latest tradable FMP security list.
+
+        The upstream FMP ``stock/list`` endpoint is latest-state only. The
+        ``as_of`` argument is accepted for interface consistency, but this
+        method is not point-in-time safe and must not be used as if it were a
+        historical universe snapshot.
+        """
         data = self._get_json("stock/list")
         if not isinstance(data, list):
             return []
@@ -131,7 +136,7 @@ class FinancialModelingPrepProvider:
 
             classification = None
             if exchange:
-                classification = Classification(sector="unknown", exchange=exchange)
+                classification = Classification(exchange=exchange)
 
             results.append(
                 Security(
@@ -311,6 +316,13 @@ class FinancialModelingPrepProvider:
         return snapshots
 
     def get_peer_groups(self, tickers: list[str], as_of: date) -> list[PeerGroup]:
+        """Return the latest available FMP sector and industry groupings.
+
+        This method uses the latest company profile endpoint for each ticker.
+        The ``as_of`` argument is accepted for interface consistency, but the
+        result is latest-state only and is not point-in-time safe for
+        validation or backtesting.
+        """
         by_sector: dict[str, list[str]] = {}
         by_industry: dict[str, list[str]] = {}
 

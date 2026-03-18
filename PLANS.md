@@ -218,3 +218,132 @@ Latest progress:
 4. Added focused regression tests in `tests/test_config.py` and `tests/test_reporting.py`.
 5. Added deterministic partial assembly for pillar score cards in `src/stock_selection/scoring/composite.py` plus reporting projections for that assembly.
 6. Completed Milestone 5 by adding an RP-only preview ranking/export consumer on top of the partial assemblies.
+7. Added another focused hardening pass for the config layer: penalty rule names/weights now validate earlier, YAML parse errors are path-aware, and non-mapping roots report their actual type.
+
+---
+
+### 2026-03-17 — Comprehensive Review Refresh
+Status: in_progress
+Owner: Codex
+Related files:
+- `src/stock_selection/models.py`
+- `src/stock_selection/data/fmp.py`
+- `src/stock_selection/data/providers.py`
+- `src/stock_selection/universe/eligibility.py`
+- `src/stock_selection/cli/main.py`
+- `src/stock_selection/backtest/snapshots.py`
+- `src/stock_selection/explainability/models.py`
+- `tests/test_fmp_provider.py`
+- `tests/test_universe.py`
+- `tests/test_models.py`
+- `requirements/session-handoff.md`
+- `requirements/roadmap.md`
+- `requirements/decisions.md`
+
+Objective:
+- Reconcile the current implementation against the repository docs, fix the single highest-value review batch, and leave a prioritized follow-up plan for remaining architecture and validation risks.
+
+Findings:
+1. Severity `P1`: provider and universe integrity had regressed from the documented contract. `FinancialModelingPrepProvider.list_securities(...)` invented `sector="unknown"` for exchange-only rows, and investability checks treated any non-`None` classification as sufficient peer classification.
+   Recommended fix: make `Classification.sector` optional again, preserve exchange-only classifications honestly, and require at least one meaningful peer-group-defining field for `require_classification=True`.
+   Dependencies: existing provider/universe tests.
+   Acceptance criteria:
+   - exchange-only FMP security rows do not fabricate sector data
+   - exchange-only classification does not satisfy peer classification requirements
+   - blank peer-classification strings are treated as missing
+   - focused tests cover provider output, gating failure, and gating bypass when classification is optional
+   Status: fixed in this session.
+2. Severity `P1`: provider timing semantics are still under-specified for validation/backtesting safety. `list_securities(...)` and `get_peer_groups(...)` accept `as_of` but use latest-state endpoints without a contract-level distinction between latest-only and point-in-time-safe methods.
+   Recommended fix: document latest-only behavior explicitly in provider contracts and FMP docstrings/comments, then add focused tests that guard against accidental point-in-time claims.
+   Dependencies: none.
+   Acceptance criteria:
+   - latest-only provider methods are explicitly labeled as such at the contract boundary
+   - focused tests or assertions verify that current behavior stays explicit rather than implied point-in-time safe
+3. Severity `P2`: the repository still lacks the remaining pillar implementations and a true multi-pillar ranking path; current ranking support is limited to RP preview output and a hardcoded sample ranking CLI path.
+   Recommended fix: continue milestone work incrementally, starting with the narrowest Growth pillar path, while keeping preview vs final ranking semantics explicit.
+   Dependencies: completed normalization and RP contracts.
+   Acceptance criteria:
+   - new pillar paths remain deterministic and explicit about missing data
+   - sample-only ranking paths are either clearly labeled or replaced when real multi-pillar assembly exists
+4. Severity `P2`: explainability and backtest layers remain scaffolds, so validation-safety requirements from the docs are still mostly documented rather than implemented.
+   Recommended fix: keep these deferred until later milestones, but continue treating look-ahead, turnover, cost, and benchmark alignment as explicit acceptance criteria before any validation claims.
+   Dependencies: broader scoring and ranking pipeline.
+   Acceptance criteria:
+   - no code or docs imply backtest fidelity beyond the current scaffolded behavior
+5. Severity `P3`: repo-wide Ruff still fails on two remaining `UP042` enum findings in `src/stock_selection/factors/registry.py`.
+   Recommended fix: convert those enums to `StrEnum` in a dedicated lint batch.
+   Dependencies: none.
+   Acceptance criteria:
+   - `uv run ruff check .` passes or fails only on issues outside the selected scope
+
+Validation:
+- `uv run pytest -q`
+- `uv run ruff check .`
+- `uv run pyright`
+
+Risks / open questions:
+- The repo docs now largely match the implementation again, but provider timing semantics remain the biggest review-driven safety gap before deeper validation or backtesting work.
+- Milestone 6 feature work is ready from an implementation standpoint, but the next review-driven batch is still valuable if we want the provider contract to be explicit before more pipeline depth accumulates.
+
+Resume prompt:
+- Read the baseline docs, then implement only the next review batch: make latest-only provider timing behavior explicit in the provider contracts and FMP adapter, add focused tests for that contract, run targeted checks plus `uv run ruff check .` and `uv run pyright`, and update handoff/roadmap/decisions/PLANS.
+
+---
+
+### 2026-03-17 — Review-Only Audit
+Status: complete
+Owner: Codex
+Related files:
+- `docs/audit-findings.md`
+- `src/stock_selection/data/providers.py`
+- `src/stock_selection/data/fmp.py`
+- `src/stock_selection/cli/main.py`
+- `src/stock_selection/backtest/snapshots.py`
+- `src/stock_selection/explainability/models.py`
+- `requirements/session-handoff.md`
+
+Objective:
+- Audit the committed implementation against the repository docs, record the highest-signal open issues, and leave a single recommended remediation batch.
+
+Findings:
+1. Severity `high`: provider timing semantics are still under-specified for point-in-time use.
+   Recommended fix: make latest-only behavior explicit in provider contracts and the FMP adapter.
+   Dependencies: none.
+   Acceptance criteria:
+   - latest-only methods are clearly marked at the contract boundary
+   - focused tests guard against implied point-in-time behavior
+2. Severity `medium`: the CLI still exposes a hardcoded sample ranking export that bypasses the implemented scoring path.
+   Recommended fix: keep it clearly labeled as demo-only or replace it with a pipeline-backed consumer once broader ranking semantics exist.
+   Dependencies: later ranking work or a docs-only clarification.
+   Acceptance criteria:
+   - CLI command semantics are explicit and not misleading
+3. Severity `medium`: the framework remains partial beyond the RP slice.
+   Recommended fix: continue milestone work with the narrowest Growth pillar path, then add remaining pillars incrementally.
+   Dependencies: completed RP/normalization contracts.
+   Acceptance criteria:
+   - each new pillar preserves deterministic missing-data behavior and focused tests
+4. Severity `medium`: explainability and backtest layers remain scaffolds.
+   Recommended fix: keep these deferred, but maintain explicit anti-bias requirements before any validation claims.
+   Dependencies: broader scoring and ranking pipeline.
+   Acceptance criteria:
+   - no code or docs imply validation fidelity beyond current scaffold behavior
+5. Severity `medium`: RP missing-data fallback semantics are explicit but still provisional.
+   Recommended fix: revisit only when broader multi-pillar coverage policy is defined.
+   Dependencies: later multi-pillar ranking work.
+   Acceptance criteria:
+   - future ranking semantics tests cover missing-data policy coherently across pillars
+6. Severity `low`: repo-wide Ruff still fails on two registry enum findings.
+   Recommended fix: convert the remaining registry enums to `StrEnum`.
+   Dependencies: none.
+   Acceptance criteria:
+   - `uv run ruff check .` passes cleanly
+
+Recommended first batch:
+1. Fix `AUDIT-001` only.
+2. Keep the change scoped to provider contracts, FMP method comments/contracts, and focused tests.
+3. Do not start Growth or other pillar work in the same batch.
+4. Status: completed on 2026-03-17. Latest-only timing semantics are now explicit in the provider contract and FMP adapter, with focused regression tests.
+
+Recommended next batch:
+1. Fix `AUDIT-002` only.
+2. Keep the change scoped to clarifying or tightening the CLI sample-ranking contract so it does not misrepresent itself as pipeline-backed ranking behavior.

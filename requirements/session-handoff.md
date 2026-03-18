@@ -1,61 +1,65 @@
 # Session Handoff
 
 ## Completed
-- Attempted to compare repo docs against `requirements/framework-primary-source.pdf`; the PDF remains stored in-repo, but this environment still lacks a reliable local text extraction path, so no PDF-specific requirement delta was applied in code this session.
-- Completed Milestone 5.
-- Added the smallest ranking-adjacent consumer on top of the RP partial assemblies.
-  - `rank_relative_performance_assemblies(...)` ranks by RP score deterministically with ticker as the tie-breaker.
-  - `RelativePerformancePillarEngine.preview_rankings(...)` now provides the end-to-end RP preview path from raw six-month return inputs to ranked preview rows.
-  - Preview outputs remain explicit about incomplete coverage through `assembly_status`, `meets_minimum_pillars`, and `missing_pillars`.
-  - The path is intentionally labeled preview-only and does not pretend to be a full multi-pillar composite ranking.
-- Added preview export support in `src/stock_selection/reporting.py` and `src/stock_selection/cli/main.py`.
-  - `relative_performance_preview_ranks_to_frame(...)`
-  - `write_relative_performance_preview_csv(...)`
-  - `export-sample-relative-performance-preview`
-- Expanded focused tests in `tests/test_relative_performance.py`, `tests/test_reporting.py`, and `tests/test_cli.py` for RP preview ranking determinism, explicit partial-assembly status, preview export, and CLI integration.
+- Completed a focused quality-hardening pass on the current implementation without starting a new feature slice.
+- Tightened config/schema validation in `src/stock_selection/config.py`:
+  - penalty rule names must be non-blank
+  - penalty rule weights must be non-negative
+  - invalid YAML now fails with a clearer path-aware error
+  - non-mapping YAML roots now report the actual root type
+- Added a type annotation for `REQUIRED_PILLARS` in `src/stock_selection/constants.py`.
+- Added focused regression coverage for invalid YAML, missing config files, and invalid penalty-rule weights.
 
 ## Current status
-- Milestone 5 is complete.
-- The repo now has a complete deterministic RP slice from raw six-month return inputs to normalized factor observations, `PillarScoreCard` outputs, partial pillar assembly, RP preview ranking, reporting projections, and CLI sample export.
-- Full multi-pillar composite ranking semantics are still intentionally absent and remain deferred to later milestones.
-- Targeted RP/composite/reporting/CLI tests and pyright pass in this environment; targeted Ruff passes for the changed files.
-- `uv run ruff check .` still fails due to 5 pre-existing repo-wide UP042 findings outside the changed Milestone 5 scope.
+- The current implementation is slightly more hardened around config and schema validation.
+- The repo currently includes completed normalization and a narrow end-to-end RP slice, but the broader framework remains partial.
+- Remaining gaps are primarily:
+- the CLI still exposes a hardcoded sample ranking path alongside real RP exports (`AUDIT-002`)
+- only RP is implemented end-to-end; the remaining pillars and true multi-pillar ranking are still absent (`AUDIT-003`)
+- explainability and backtest layers are still scaffolds (`AUDIT-004`)
+- RP missing-data fallback semantics are explicit but still provisional (`AUDIT-005`)
+- All executed tests passed in this session.
+- `uv run pyright` passes in this environment.
+- `uv run ruff check .` now fails only on 2 pre-existing `UP042` findings in `src/stock_selection/factors/registry.py`.
 
 ## Next task
-- Start Milestone 6 only by implementing the narrowest Growth pillar path on top of the completed normalization and partial-assembly contracts.
+- Recommended next task remains unchanged: fix `AUDIT-002` only by clarifying or tightening the CLI sample-ranking contract.
 
 ## Known blockers
-- `uv run ruff check .` currently fails on 5 pre-existing UP042 findings in:
+- `uv run ruff check .` currently fails on 2 pre-existing `UP042` findings in:
   - `src/stock_selection/factors/registry.py`
-  - `src/stock_selection/models.py`
-- The newly added framework PDF is stored in-repo, but this environment still lacks a reliable local PDF text extractor; future sessions should prefer direct PDF-capable tooling when repo-doc and PDF specificity need to be compared line by line.
 
 ## Changed files
-- `src/stock_selection/cli/main.py`
-- `src/stock_selection/reporting.py`
-- `src/stock_selection/scoring/__init__.py`
-- `src/stock_selection/scoring/composite.py`
-- `src/stock_selection/scoring/relative_performance.py`
-- `tests/test_reporting.py`
-- `tests/test_relative_performance.py`
-- `tests/test_cli.py`
+- `src/stock_selection/constants.py`
+- `src/stock_selection/config.py`
+- `tests/test_config.py`
 - `requirements/session-handoff.md`
-- `requirements/decisions.md`
 - `requirements/roadmap.md`
-- `docs/architecture.md`
-- `docs/scoring-spec.md`
+- `requirements/decisions.md`
 - `PLANS.md`
 
 ## Validation run
-- `uv run pytest -q tests/test_relative_performance.py tests/test_composite.py tests/test_reporting.py tests/test_cli.py` (passed)
-- `uv run ruff check src/stock_selection/scoring/__init__.py src/stock_selection/scoring/composite.py src/stock_selection/scoring/relative_performance.py src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_relative_performance.py tests/test_composite.py tests/test_reporting.py tests/test_cli.py` (passed)
-- `uv run ruff check .` (failed: 5 pre-existing UP042 violations outside changed Milestone 5 scope)
+- `uv run pytest -q tests/test_config.py` (passed)
+- `uv run pytest -q` (passed)
+- `uv run ruff check src/stock_selection/constants.py src/stock_selection/config.py tests/test_config.py` (passed)
+- `uv run ruff check .` (failed only on 2 pre-existing `UP042` violations in `src/stock_selection/factors/registry.py`)
 - `uv run pyright` (passed: `0 errors`)
+
+## Hardening status
+- Highest-value hardening changes implemented:
+  - stricter penalty-rule validation
+  - clearer YAML parse and schema errors
+  - explicit typed canonical pillar constant
+- What remains:
+  - `AUDIT-002`
+  - `AUDIT-003`
+  - `AUDIT-004`
+  - `AUDIT-005`
+  - `AUDIT-006`
 
 ## Exact next prompt
 Read:
 - AGENTS.md
-- requirements/framework-primary-source.pdf
 - PLANS.md
 - requirements/session-handoff.md
 - requirements/roadmap.md
@@ -66,9 +70,8 @@ Read:
 - docs/code_review.md
 
 Then:
-1. compare the repo docs with `requirements/framework-primary-source.pdf` where tooling allows, and treat the PDF as primary only where it is more specific
-2. start Milestone 6 only by implementing the narrowest Growth pillar path on top of the completed normalization and partial-assembly contracts
-3. keep the implementation deterministic, config-free for now unless the docs or framework PDF require otherwise, and explicit about missing-data behavior
-4. add/update focused tests only for the changed Growth pillar integration path
-5. avoid unrelated refactors
-6. run targeted tests for changed Growth/scoring/normalization modules plus `uv run ruff check .` and `uv run pyright`, then update handoff/roadmap/decisions/PLANS with results
+1. implement only the next remediation batch: fix `AUDIT-002`
+2. keep the CLI/export behavior deterministic and explicit about which commands are demo-only versus pipeline-backed
+3. add/update focused tests only for the changed CLI contract path
+4. avoid unrelated refactors
+5. run targeted CLI/reporting tests plus `uv run pytest -q`, `uv run ruff check .`, and `uv run pyright`, then update handoff, roadmap, decisions, and PLANS with results

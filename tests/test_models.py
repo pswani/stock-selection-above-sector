@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from stock_selection.models import PenaltyTrace, RankingResult
+from stock_selection.models import Classification, PenaltyTrace, RankingResult
 
 
 def test_ranking_result_accepts_valid_scores() -> None:
@@ -31,3 +31,10 @@ def test_ranking_result_rejects_final_score_above_weighted() -> None:
             final_score=81,
             pillar_scores={},
         )
+
+
+def test_classification_allows_missing_sector_when_only_exchange_is_known() -> None:
+    classification = Classification(exchange="NASDAQ")
+
+    assert classification.sector is None
+    assert classification.exchange == "NASDAQ"

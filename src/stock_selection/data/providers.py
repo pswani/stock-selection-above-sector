@@ -18,11 +18,25 @@ from stock_selection.models import (
 
 
 class UniverseProvider(Protocol):
-    def list_securities(self, as_of: date) -> list[Security]: ...
+    def list_securities(self, as_of: date) -> list[Security]:
+        """Return the latest tradable security universe.
+
+        The ``as_of`` argument is part of the shared provider interface, but
+        implementations may need to use latest-state sources. Methods backed by
+        latest-only sources must document that they are not point-in-time safe.
+        """
+        ...
 
 
 class ClassificationProvider(Protocol):
-    def get_peer_groups(self, tickers: list[str], as_of: date) -> list[PeerGroup]: ...
+    def get_peer_groups(self, tickers: list[str], as_of: date) -> list[PeerGroup]:
+        """Return peer groups for the supplied securities.
+
+        The ``as_of`` argument is part of the shared provider interface, but
+        implementations may need to use latest-state classification sources.
+        Methods backed by latest-only sources must document that they are not point-in-time safe.
+        """
+        ...
 
 
 class PriceDataProvider(Protocol):

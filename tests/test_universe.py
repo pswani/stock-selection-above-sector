@@ -30,7 +30,7 @@ def _security(
         or exchange is not None
     ):
         classification = Classification(
-            sector=sector or "Unknown",
+            sector=sector,
             industry=industry,
             sub_industry=sub_industry,
             exchange=exchange,
@@ -147,3 +147,52 @@ def test_build_standard_peer_maps_returns_sector_industry_sub_industry() -> None
 def test_build_peer_groups_rejects_invalid_min_group_size() -> None:
     with pytest.raises(ValueError, match="min_group_size must be >= 1"):
         build_peer_groups([_security("MSFT")], level=PeerLevel.SECTOR, min_group_size=0)
+
+
+def test_exchange_only_classification_does_not_satisfy_peer_classification_requirement() -> None:
+    security = _security(
+        "MSFT",
+        sector=None,
+        industry=None,
+        sub_industry=None,
+        exchange="NASDAQ",
+    )
+
+    result = evaluate_investability([security])
+
+    assert result.eligible == []
+    assert result.excluded_reasons["MSFT"] == ["missing_classification"]
+
+
+def test_blank_peer_classification_values_do_not_satisfy_requirement() -> None:
+    security = _security(
+        "MSFT",
+        sector="   ",
+        industry="",
+        sub_industry=None,
+        exchange="NASDAQ",
+    )
+
+    result = evaluate_investability([security])
+
+    assert result.eligible == []
+    assert result.excluded_reasons["MSFT"] == ["missing_classification"]
+
+
+def test_exchange_only_classification_can_still_pass_when_peer_classification_not_required(
+) -> None:
+    security = _security(
+        "MSFT",
+        sector=None,
+        industry=None,
+        sub_industry=None,
+        exchange="NASDAQ",
+    )
+    config = UniverseFilterConfig(
+        require_classification=False,
+        allowed_exchanges=("NASDAQ",),
+    )
+
+    result = evaluate_investability([security], config=config)
+
+    assert [item.ticker for item in result.eligible] == ["MSFT"]

@@ -47,7 +47,7 @@ def evaluate_investability(
             if exchange not in effective.allowed_exchanges:
                 reasons.append("exchange_not_allowed")
 
-        if effective.require_classification and security.classification is None:
+        if effective.require_classification and not _has_peer_classification(security):
             reasons.append("missing_classification")
 
         if reasons:
@@ -65,3 +65,22 @@ def filter_investable_universe(
     config: UniverseFilterConfig | None = None,
 ) -> list[Security]:
     return evaluate_investability(securities, config=config).eligible
+
+
+def _has_peer_classification(security: Security) -> bool:
+    classification = security.classification
+    if classification is None:
+        return False
+    return any(
+        _has_meaningful_classification_value(value)
+        for value in (
+            classification.sector,
+            classification.industry_group,
+            classification.industry,
+            classification.sub_industry,
+        )
+    )
+
+
+def _has_meaningful_classification_value(value: str | None) -> bool:
+    return value is not None and value.strip() != ""

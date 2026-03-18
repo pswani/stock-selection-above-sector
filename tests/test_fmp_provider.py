@@ -7,7 +7,11 @@ from stock_selection.data.fmp import (
     FmpProviderError,
     FmpProviderUnsupportedCapabilityError,
 )
-from stock_selection.data.providers import build_primary_provider
+from stock_selection.data.providers import (
+    ClassificationProvider,
+    UniverseProvider,
+    build_primary_provider,
+)
 
 
 class StubFmpProvider(FinancialModelingPrepProvider):
@@ -119,10 +123,14 @@ class UnsupportedEndpointStubFmpProvider(FinancialModelingPrepProvider):
 def test_fmp_provider_parses_price_fundamental_and_estimate_snapshots() -> None:
     provider = StubFmpProvider()
 
+    securities = provider.list_securities(as_of=date(2026, 1, 31))
     prices = provider.get_price_history(["MSFT"], start=date(2026, 1, 1), end=date(2026, 1, 31))
     fundamentals = provider.get_fundamentals(["MSFT"], as_of=date(2026, 1, 31))
     estimates = provider.get_estimates(["MSFT"], as_of=date(2026, 1, 31))
 
+    assert securities[0].classification is not None
+    assert securities[0].classification.exchange == "NASDAQ"
+    assert securities[0].classification.sector is None
     assert prices[0].ticker == "MSFT"
     assert prices[0].close == 105.0
     assert fundamentals[0].return_on_equity == 0.3
@@ -221,6 +229,32 @@ def test_fmp_provider_builds_peer_groups() -> None:
     by_level = {group.level: group for group in groups}
     assert by_level["industry"].members == ["ADBE", "MSFT"]
     assert by_level["sector"].members == ["ADBE", "MSFT"]
+
+
+def test_latest_only_provider_methods_are_documented_as_not_point_in_time_safe() -> None:
+    list_doc = FinancialModelingPrepProvider.list_securities.__doc__
+    peer_doc = FinancialModelingPrepProvider.get_peer_groups.__doc__
+
+    assert list_doc is not None
+    assert "latest" in list_doc.lower()
+    assert "not point-in-time safe" in list_doc.lower()
+
+    assert peer_doc is not None
+    assert "latest" in peer_doc.lower()
+    assert "not point-in-time safe" in peer_doc.lower()
+
+
+def test_provider_contract_methods_document_latest_only_behavior() -> None:
+    list_doc = UniverseProvider.list_securities.__doc__
+    peer_doc = ClassificationProvider.get_peer_groups.__doc__
+
+    assert list_doc is not None
+    assert "latest" in list_doc.lower()
+    assert "not point-in-time safe" in list_doc.lower()
+
+    assert peer_doc is not None
+    assert "latest" in peer_doc.lower()
+    assert "not point-in-time safe" in peer_doc.lower()
 
 
 def test_build_primary_provider_requires_api_key(monkeypatch: pytest.MonkeyPatch) -> None:

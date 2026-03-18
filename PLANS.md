@@ -315,6 +315,7 @@ Findings:
 2. Severity `medium`: the CLI still exposes a hardcoded sample ranking export that bypasses the implemented scoring path.
    Recommended fix: keep it clearly labeled as demo-only or replace it with a pipeline-backed consumer once broader ranking semantics exist.
    Dependencies: later ranking work or a docs-only clarification.
+   Status: fixed on 2026-03-17 by replacing the public command with `export-demo-ranking`, retaining `export-sample-ranking` only as a hidden deprecated alias, and making RP export notices explicitly pipeline-backed versus preview-only.
    Acceptance criteria:
    - CLI command semantics are explicit and not misleading
 3. Severity `medium`: the framework remains partial beyond the RP slice.
@@ -345,5 +346,5 @@ Recommended first batch:
 4. Status: completed on 2026-03-17. Latest-only timing semantics are now explicit in the provider contract and FMP adapter, with focused regression tests.
 
 Recommended next batch:
-1. Fix `AUDIT-002` only.
-2. Keep the change scoped to clarifying or tightening the CLI sample-ranking contract so it does not misrepresent itself as pipeline-backed ranking behavior.
+1. Fix `AUDIT-003` only.
+2. Keep the change scoped to the narrowest next pillar path without inventing final multi-pillar ranking behavior.

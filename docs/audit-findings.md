@@ -27,6 +27,7 @@
 - Recommended fix: Keep the sample command clearly scoped as demo-only or replace it with the next smallest pipeline-backed ranking/export consumer when multi-pillar semantics exist.
 - Test expectation: Add focused CLI tests that make the command contract explicit, especially if the command is renamed, narrowed, or replaced.
 - Dependencies: Either a docs-only clarification or later multi-pillar ranking work.
+- Status: Verified complete on 2026-03-17. The public hardcoded ranking export is now explicitly `export-demo-ranking`, `export-sample-ranking` remains only as a hidden deprecated alias, and RP CLI exports now state when they are pipeline-backed preview versus non-preview paths.
 
 ### AUDIT-003 — Framework implementation remains partial beyond the RP slice
 - Severity: Medium

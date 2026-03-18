@@ -11,6 +11,7 @@ Milestone 5 in progress: Relative Performance pillar end-to-end.
 5. Keep the new normalized-factor contract stable as pillar work begins.
 
 ## Cross-cutting readiness
+- The re-uploaded framework PDF is now stored at `requirements/framework-primary-source.pdf` and should be treated as the more specific requirements source when it can be inspected reliably.
 - Fresh-server environment initialization is standardized via `scripts/bootstrap.sh` and `scripts/validate-env.sh`.
 - Environment scripts now check complete runtime/developer dependency availability before milestone work proceeds.
 - `validate-env.sh` is self-contained (uv check + frozen sync) for newly provisioned servers.
@@ -20,6 +21,8 @@ Milestone 5 in progress: Relative Performance pillar end-to-end.
 - Milestone 5 now has a narrow RP path from six-month return inputs to `PillarScoreCard` outputs with explicit diagnostics and coverage.
 - The highest-value review batch is complete: RP now also plugs into the scoring abstraction through `PillarEngine`.
 - The next RP consumer batch is also complete: reporting and CLI can now export actual RP score cards from the implemented path.
+- The latest hardening batch is complete for current scope: config loading now validates profile names and pillar-weight shape more strictly, and reporting exports use deterministic dynamic column ordering with explicit empty schemas.
+- The next broader RP assembly step is now complete: RP score cards can be grouped into deterministic per-ticker partial assemblies with explicit `insufficient_pillars` behavior and reporting projections, without starting other pillars or inventing final rankings.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

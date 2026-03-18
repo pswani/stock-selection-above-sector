@@ -32,3 +32,4 @@ This repo includes interfaces, typed models, and baseline composite / penalty or
 Milestone 4 now includes a complete normalization handoff from `FactorObservation` outputs into typed normalized factor observations, with deterministic DataFrame projections available for downstream consumers before any pillar scoring is applied.
 Milestone 5 has now started with an end-to-end Relative Performance path that builds `relative_strength_6m` factor observations and converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage.
 The current RP path is now consumable through reporting and CLI sample export without introducing other pillars.
+Milestone 5 now also includes a deterministic partial-assembly step: `assemble_pillar_score_cards(...)` groups pillar score cards by ticker, preserves per-pillar diagnostics/coverage, and marks insufficient-pillar status explicitly instead of inventing a full multi-pillar ranking.

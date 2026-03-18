@@ -110,7 +110,7 @@ Milestones:
    - Scope: first complete pillar from factor inputs to normalized pillar score.
    - Acceptance criteria: RP score card produced with diagnostics and coverage ratio.
    - Tests: unit tests + integration test through composite assembly.
-   - Progress: added `src/stock_selection/scoring/relative_performance.py` with a narrow end-to-end RP path. `build_relative_performance_observations(...)` constructs deterministic `relative_strength_6m` factor observations from six-month return inputs and peer groups, `score_relative_performance(...)` converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage, and `RelativePerformancePillarEngine` now plugs RP into the scoring abstraction. Reporting/CLI now have a deterministic consumer for RP score cards through `pillar_score_cards_to_frame(...)`, `write_pillar_score_cards_csv(...)`, and `export-sample-relative-performance`. Focused tests cover happy-path scoring, explicit missing-data behavior, requested-ticker engine behavior, reporting, and CLI export. Remaining Milestone 5 work is to wire RP score cards into a broader assembly path without broadening into other pillars.
+   - Progress: added `src/stock_selection/scoring/relative_performance.py` with a narrow end-to-end RP path. `build_relative_performance_observations(...)` constructs deterministic `relative_strength_6m` factor observations from six-month return inputs and peer groups, `score_relative_performance(...)` converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage, and `RelativePerformancePillarEngine` now plugs RP into the scoring abstraction. Reporting/CLI now have a deterministic consumer for RP score cards through `pillar_score_cards_to_frame(...)`, `write_pillar_score_cards_csv(...)`, and `export-sample-relative-performance`. The next broader assembly seam is now implemented via `assemble_pillar_score_cards(...)`, which groups available pillar score cards per ticker, preserves per-pillar coverage/diagnostics, and marks `insufficient_pillars` explicitly when `min_required_pillars` is not met. Reporting can project these partial assemblies through `pillar_score_assemblies_to_frame(...)` and `write_pillar_score_assemblies_csv(...)`. Focused tests cover happy-path scoring, explicit missing-data behavior, requested-ticker engine behavior, partial assembly behavior, reporting, and CLI export. Remaining Milestone 5 work is to decide and implement the smallest ranking-adjacent consumer for these partial assemblies without starting other pillars or inventing full composite semantics.
    - Dependencies: Milestones 1-4.
 
 6. **Milestone 6 — Remaining pillars (G, Q, V, R, S) incremental**
@@ -180,7 +180,7 @@ Findings:
    Status: fixed in this session.
 2. Severity `P1`: the scoring pipeline still lacks the next minimal consumer for RP score cards, so the first pillar exists but is not yet assembled into a broader scoring flow.
    Recommended fix: add the smallest assembly or reporting consumer that consumes RP score cards without introducing other pillars.
-   Status: partially fixed in this session via reporting/CLI export; broader scoring assembly still remains.
+   Status: partially fixed in this session via reporting/CLI export and explicit partial pillar assembly; broader ranking flow still remains.
 3. Severity `P2`: CLI/export remains sample-data oriented and does not exercise the live deterministic scoring path, which weakens end-to-end confidence.
    Recommended fix: add a narrow CLI/reporting entry point for deterministic RP outputs from fixtures.
    Status: fixed in changed scope for RP via `export-sample-relative-performance`.
@@ -188,8 +188,16 @@ Findings:
    Recommended fix: keep these deferred until after pillar assembly, but explicitly preserve anti-bias requirements in later milestones.
 5. Severity `P2`: missing-data semantics for pillar scores currently use a `0.0` fallback when RP normalization cannot produce a percentile; this is explicit but may need refinement when ranking coverage policy is formalized.
    Recommended fix: revisit only when coverage/min-required-pillar behavior is implemented so policy stays coherent.
+   Status: unchanged.
 6. Severity `P3`: repo-wide Ruff `UP042` baseline findings continue to obscure changed-scope lint signal.
    Recommended fix: address the baseline in a dedicated lint batch when brought into scope.
+   Status: unchanged.
+7. Severity `P2`: config validation was too permissive for the existing scoring contract, allowing invalid pillar-weight maps to survive until later scoring code.
+   Recommended fix: validate required pillar coverage, non-negative weights, and positive total weight at config-load time with clearer errors.
+   Status: fixed in this session.
+8. Severity `P3`: reporting exports had under-specified empty/dynamic-column behavior, which weakened determinism for CSV contracts.
+   Recommended fix: use stable base schemas and deterministic dynamic-column ordering.
+   Status: fixed in this session.
 
 Dependencies:
 1. Completed normalization contract from Milestone 4.
@@ -202,3 +210,10 @@ Acceptance criteria:
 3. Focused tests cover the changed RP/scoring integration path.
 4. `uv run pyright` passes and changed-scope Ruff checks pass.
 5. Remaining gaps are documented explicitly in handoff and roadmap files.
+
+Latest progress:
+1. Added `requirements/framework-primary-source.pdf` as the stored primary framework source for future sessions.
+2. Hardened `src/stock_selection/config.py` so invalid scoring profiles fail earlier with clearer messages.
+3. Hardened `src/stock_selection/reporting.py` so ranking and pillar exports keep deterministic dynamic columns and explicit empty schemas.
+4. Added focused regression tests in `tests/test_config.py` and `tests/test_reporting.py`.
+5. Added deterministic partial assembly for pillar score cards in `src/stock_selection/scoring/composite.py` plus reporting projections for that assembly.

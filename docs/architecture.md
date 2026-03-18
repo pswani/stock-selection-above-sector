@@ -25,6 +25,7 @@ This repository provides an opinionated foundation for a sector-relative stock s
 5. **Scoring layer**
    - Pillar interfaces
    - Pillar score cards as the diagnostic scoring contract
+   - Partial pillar-score assembly before full composite ranking exists
    - Composite score assembly
    - Profile-based weighting
 6. **Penalty layer**

@@ -140,7 +140,7 @@ class NormalizedFactorObservation(BaseModel):
 class PillarScoreCard(BaseModel):
     ticker: str
     pillar: str
-    score: float = Field(ge=0, le=100)
+    score: float | None = Field(default=None, ge=0, le=100)
     coverage_ratio: float | None = Field(default=None, ge=0, le=1)
     diagnostics: dict[str, float | str | None] = Field(default_factory=dict)
     as_of: date | None = None

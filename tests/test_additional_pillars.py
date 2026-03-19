@@ -54,7 +54,7 @@ def test_quality_engine_keeps_stale_data_explicit() -> None:
     )
     cards = engine.score_cards(["AAA", "BBB"], as_of=date(2026, 1, 31))
     by_ticker = {card.ticker: card for card in cards}
-    assert by_ticker["AAA"].score == 0.0
+    assert by_ticker["AAA"].score is None
     assert by_ticker["AAA"].diagnostics["normalization_status"] == "missing_value"
 
 

@@ -1,13 +1,12 @@
 # Roadmap
 
 ## Current phase
-Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, and the next review-driven work shifts to ranking-policy refinement and validation depth.
+Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, including the missing-data coverage policy for fully assembled rankings. The next review-driven work shifts to validation depth and the remaining lint baseline.
 
 ## Immediate milestones
-1. Revisit the current missing-data fallback and ranking-coverage policy now that full six-pillar ranking exists.
-2. Deepen validation realism beyond the current deterministic turnover/cost harness.
-3. Expand explainability beyond summary cards into richer ranking diagnostics when needed.
-4. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
+1. Deepen validation realism beyond the current deterministic turnover/cost harness.
+2. Expand explainability beyond summary cards into richer ranking diagnostics when needed.
+3. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
 
 ## Cross-cutting readiness
 - The re-uploaded framework PDF is now stored at `requirements/framework-primary-source.pdf` and should be treated as the more specific requirements source when it can be inspected reliably.
@@ -30,7 +29,7 @@ Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, an
 - Milestone 6 now covers all six pillars and a deterministic composite ranking path, with pipeline-backed sample exports for final ranking, explanation cards, and validation results.
 - The validation layer now includes a deterministic top-k harness with turnover, transaction costs, benchmark-relative excess returns, and explicit assumptions/limitations.
 - The explainability layer now includes deterministic explanation-card generation derived from ranking outputs.
-- The top open review-driven gap is now the provisional missing-data fallback policy, followed by deeper validation realism and the repo-wide Ruff baseline.
+- The top open review-driven gaps are now deeper validation realism and the repo-wide Ruff baseline.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

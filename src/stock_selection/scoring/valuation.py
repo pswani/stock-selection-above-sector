@@ -52,7 +52,7 @@ def score_valuation(observations: list[FactorObservation]) -> list[PillarScoreCa
         PillarScoreCard(
             ticker=observation.ticker,
             pillar="V",
-            score=observation.percentile_rank or 0.0,
+            score=observation.percentile_rank,
             coverage_ratio=observation.coverage_ratio,
             diagnostics={
                 "factor_name": observation.factor_name,

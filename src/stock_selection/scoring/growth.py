@@ -54,7 +54,7 @@ def score_growth(
         PillarScoreCard(
             ticker=observation.ticker,
             pillar="G",
-            score=observation.percentile_rank or 0.0,
+            score=observation.percentile_rank,
             coverage_ratio=observation.coverage_ratio,
             diagnostics={
                 "factor_name": observation.factor_name,
@@ -115,7 +115,7 @@ class GrowthPillarEngine(PillarEngine):
         )
         return score_growth(observations)
 
-    def score(self, tickers: list[str], as_of: date) -> dict[str, float]:
+    def score(self, tickers: list[str], as_of: date) -> dict[str, float | None]:
         return {
             card.ticker: card.score
             for card in self.score_cards(tickers=tickers, as_of=as_of)

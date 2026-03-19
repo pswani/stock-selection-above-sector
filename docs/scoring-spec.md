@@ -40,3 +40,9 @@ Milestone 6 now covers all six pillars with deterministic single-factor paths:
 - `S` via `eps_revision_90d`
 
 The repo now also includes a composite ranking pipeline that scores all six pillars, assembles complete pillar sets, applies configured weights and penalties, and emits deterministic final `RankingResult` outputs. The RP preview path remains explicit preview output, while the composite ranking path is now the implemented final ranking surface.
+
+## Missing-data policy
+- `PillarScoreCard.score` stays `None` when peer normalization cannot produce a percentile; missing scores are no longer coerced to `0.0`.
+- Pillar diagnostics and coverage remain populated even when the score is missing, so exports still explain whether the cause was `missing_value`, `missing_peer_group`, or `insufficient_peer_group`.
+- Composite assembly counts only scored pillars toward `available_pillar_count` and `min_required_pillars`.
+- Final composite rankings therefore exclude incompletely scored names under the current six-pillar profile settings, while assembly and preview outputs still surface those names explicitly.

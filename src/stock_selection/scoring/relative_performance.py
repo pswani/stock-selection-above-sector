@@ -67,7 +67,7 @@ def score_relative_performance(
         PillarScoreCard(
             ticker=observation.ticker,
             pillar="RP",
-            score=observation.percentile_rank or 0.0,
+            score=observation.percentile_rank,
             coverage_ratio=observation.coverage_ratio,
             diagnostics={
                 "factor_name": observation.factor_name,

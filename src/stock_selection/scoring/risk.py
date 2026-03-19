@@ -47,7 +47,7 @@ def score_risk(observations: list[FactorObservation]) -> list[PillarScoreCard]:
         PillarScoreCard(
             ticker=observation.ticker,
             pillar="R",
-            score=observation.percentile_rank or 0.0,
+            score=observation.percentile_rank,
             coverage_ratio=observation.coverage_ratio,
             diagnostics={
                 "factor_name": observation.factor_name,
@@ -90,4 +90,3 @@ class RiskPillarEngine(PillarEngine):
             source=self.source,
         )
         return score_risk(observations)
-

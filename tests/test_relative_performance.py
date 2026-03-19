@@ -56,17 +56,41 @@ def test_relative_performance_keeps_missing_data_explicit() -> None:
     cards = score_relative_performance(observations)
     by_ticker = {card.ticker: card for card in cards}
 
-    assert by_ticker["AAA"].score == 0.0
+    assert by_ticker["AAA"].score is None
     assert by_ticker["AAA"].coverage_ratio == pytest.approx(0.5)
     assert by_ticker["AAA"].diagnostics["normalization_status"] == "insufficient_peer_group"
 
-    assert by_ticker["BBB"].score == 0.0
+    assert by_ticker["BBB"].score is None
     assert by_ticker["BBB"].coverage_ratio == pytest.approx(0.5)
     assert by_ticker["BBB"].diagnostics["normalization_status"] == "missing_value"
 
-    assert by_ticker["CCC"].score == 0.0
+    assert by_ticker["CCC"].score is None
     assert by_ticker["CCC"].coverage_ratio is None
     assert by_ticker["CCC"].diagnostics["normalization_status"] == "missing_peer_group"
+
+
+def test_relative_performance_assembly_treats_missing_score_as_missing_pillar() -> None:
+    observations = build_relative_performance_observations(
+        returns_6m={"AAA": 0.12, "BBB": None},
+        peer_groups={"AAA": "sector:tech", "BBB": "sector:tech"},
+        as_of=date(2026, 1, 31),
+    )
+
+    assemblies = assemble_pillar_score_cards(
+        score_relative_performance(observations),
+        min_required_pillars=1,
+    )
+    by_ticker = {assembly.ticker: assembly for assembly in assemblies}
+
+    assert by_ticker["AAA"].available_pillar_count == 0
+    assert by_ticker["AAA"].pillar_scores == {}
+    assert by_ticker["AAA"].missing_pillars == ["RP", "G", "Q", "V", "R", "S"]
+    assert by_ticker["AAA"].assembly_status == "insufficient_pillars"
+
+    assert by_ticker["BBB"].available_pillar_count == 0
+    assert by_ticker["BBB"].pillar_scores == {}
+    assert by_ticker["BBB"].missing_pillars == ["RP", "G", "Q", "V", "R", "S"]
+    assert by_ticker["BBB"].assembly_status == "insufficient_pillars"
 
 
 def test_relative_performance_pillar_engine_scores_requested_tickers_only() -> None:
@@ -136,3 +160,23 @@ def test_relative_performance_preview_rankings_keep_assembly_status_explicit() -
         "insufficient_pillars",
     ]
     assert [item.meets_minimum_pillars for item in preview] == [False, False]
+
+
+def test_relative_performance_preview_marks_missing_scores_as_unranked() -> None:
+    engine = RelativePerformancePillarEngine(
+        returns_6m={"AAA": 0.12, "BBB": None},
+        peer_groups={"AAA": "sector:tech", "BBB": "sector:tech"},
+    )
+
+    preview = engine.preview_rankings(
+        ["AAA", "BBB"],
+        as_of=date(2026, 1, 31),
+        min_required_pillars=1,
+    )
+
+    assert [item.preview_rank for item in preview] == [None, None]
+    assert [item.score for item in preview] == [None, None]
+    assert [item.ranking_status for item in preview] == [
+        "missing_rp_score",
+        "missing_rp_score",
+    ]

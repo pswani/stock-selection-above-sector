@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from stock_selection.config import load_weight_profile
+from stock_selection.models import PillarScoreCard
 from stock_selection.penalties.rules import MinimumQualityPenalty
 from stock_selection.scoring.composite import (
     assemble_pillar_score_cards,
@@ -87,3 +88,35 @@ def test_assemble_pillar_score_cards_rejects_duplicate_ticker_pillar_pairs() -> 
 
     with pytest.raises(ValueError, match="at most one score card per ticker/pillar pair"):
         assemble_pillar_score_cards(cards + [cards[0]], min_required_pillars=1)
+
+
+def test_assemble_pillar_score_cards_excludes_missing_scores_from_availability() -> None:
+    assemblies = assemble_pillar_score_cards(
+        [
+            PillarScoreCard(
+                ticker="AAA",
+                pillar="RP",
+                score=None,
+                coverage_ratio=0.5,
+                diagnostics={"normalization_status": "insufficient_peer_group"},
+                as_of=date(2026, 1, 31),
+            ),
+            PillarScoreCard(
+                ticker="AAA",
+                pillar="G",
+                score=80.0,
+                coverage_ratio=1.0,
+                diagnostics={"normalization_status": "ok"},
+                as_of=date(2026, 1, 31),
+            ),
+        ],
+        min_required_pillars=2,
+    )
+
+    assert len(assemblies) == 1
+    assembly = assemblies[0]
+    assert assembly.available_pillar_count == 1
+    assert assembly.pillar_scores == {"G": pytest.approx(80.0)}
+    assert assembly.pillar_coverages == {"RP": pytest.approx(0.5), "G": pytest.approx(1.0)}
+    assert assembly.missing_pillars == ["RP", "Q", "V", "R", "S"]
+    assert assembly.assembly_status == "insufficient_pillars"

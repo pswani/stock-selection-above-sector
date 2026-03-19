@@ -58,7 +58,7 @@ class PillarEngine:
     def score_cards(self, tickers: list[str], as_of: date) -> list[PillarScoreCard]:
         raise NotImplementedError
 
-    def score(self, tickers: list[str], as_of: date) -> dict[str, float]:
+    def score(self, tickers: list[str], as_of: date) -> dict[str, float | None]:
         return {
             card.ticker: card.score
             for card in self.score_cards(tickers=tickers, as_of=as_of)
@@ -116,9 +116,9 @@ def assemble_pillar_score_cards(
             )
 
         pillar_scores = {
-            pillar: ticker_cards[pillar].score
+            pillar: card.score
             for pillar in required_pillars
-            if pillar in ticker_cards
+            if (card := ticker_cards.get(pillar)) is not None and card.score is not None
         }
         pillar_coverages = {
             pillar: ticker_cards[pillar].coverage_ratio
@@ -131,7 +131,9 @@ def assemble_pillar_score_cards(
             if pillar in ticker_cards
         }
         missing_pillars = [
-            pillar for pillar in required_pillars if pillar not in ticker_cards
+            pillar
+            for pillar in required_pillars
+            if pillar not in ticker_cards or ticker_cards[pillar].score is None
         ]
         available_pillar_count = len(pillar_scores)
         meets_minimum_pillars = available_pillar_count >= min_required_pillars

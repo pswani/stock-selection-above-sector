@@ -29,7 +29,7 @@
 - Factor normalization is direction-aware at the contract boundary: `LOWER_IS_BETTER` raw values are sign-flipped into an `oriented_value` before peer normalization so downstream normalized metrics always mean higher-is-better.
 - Milestone 4 is complete once normalization exposes both a typed normalized-factor contract and deterministic tests for ties, tiny groups, nulls, outliers, direction handling, and frame projection from typed outputs.
 - Milestone 5 starts with a narrow RP path: `build_relative_performance_observations(...)` is the current deterministic factor-construction helper for six-month relative strength, and `score_relative_performance(...)` is the first pillar scorer on top of the normalized-factor contract.
-- The current RP pillar score is the normalized percentile rank of `relative_strength_6m`; when normalization cannot produce a percentile, the score falls back to `0.0` while coverage and `normalization_status` remain explicit in diagnostics.
+- Pillar scores now preserve missing normalized percentiles as `None` rather than coercing them to `0.0`; coverage and `normalization_status` remain explicit in diagnostics so missing-data causes stay inspectable.
 - `PillarEngine` now treats score cards as the primary pillar output and derives score maps from them, so RP and future pillars can preserve diagnostics and coverage without maintaining parallel scoring logic.
 - RP score cards now have a deterministic reporting/CLI consumer via `pillar_score_cards_to_frame(...)`, `write_pillar_score_cards_csv(...)`, and `export-sample-relative-performance`, which exercises the actual RP path without pretending to be a full multi-pillar ranking pipeline.
 - Keep the re-uploaded framework PDF in-repo at `requirements/framework-primary-source.pdf`; when it is more specific than repo docs, it is the preferred requirements source for future implementation decisions.
@@ -57,3 +57,4 @@
 - Sample CLI/reporting surfaces must remain explicit about whether they are preview-only, demo-only, or final pipeline-backed exports.
 - The explainability layer now derives deterministic `ExplanationCard` outputs directly from ranking results and assemblies.
 - The validation layer now uses an explicit deterministic harness with top-k selection, turnover, transaction costs, benchmark returns, and documented assumptions rather than snapshot writing alone.
+- Composite assembly now counts only non-`None` pillar scores toward `available_pillar_count` and `min_required_pillars`, so final rankings exclude incompletely scored names while assembly/reporting outputs still retain their coverage and diagnostics.

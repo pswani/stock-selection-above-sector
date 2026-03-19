@@ -2,7 +2,7 @@
 
 ## Summary
 - High: 0 open, 1 fixed
-- Medium: 1
+- Medium: 0 open, 5 fixed
 - Low: 1
 
 ## Issues
@@ -60,6 +60,7 @@
 - Recommended fix: Revisit the fallback only when broader ranking coverage policy is formalized, so missing-data semantics stay coherent across pillars.
 - Test expectation: When broader ranking semantics arrive, add tests that cover partial coverage, minimum-pillar thresholds, and missing-factor behavior across multiple pillars.
 - Dependencies: Later multi-pillar ranking work.
+- Status: Verified complete on 2026-03-18. Pillar scorers now preserve missing normalized percentiles as `None` instead of coercing them to `0.0`, composite assembly counts only scored pillars toward coverage thresholds, and incompletely scored names remain explicit in assembly/preview exports while being excluded from final composite rankings.
 
 ### AUDIT-006 — Repo-wide lint baseline is still not clean
 - Severity: Low

@@ -153,7 +153,7 @@ Risks / open questions:
 - Final factor formulas/threshold calibrations are still pending and must remain config-driven.
 - FMP adapter is now the primary provider entry point; provider-contract expansion is complete, and the next delivery risk shifts to documenting and implementing deterministic peer-relative normalization behavior for small/incomplete groups.
 - The normalized-factor contract is now typed; the next delivery risk is choosing the smallest RP pillar inputs/formulas that use it without prematurely generalizing for later pillars.
-- The current RP implementation maps missing normalized percentiles to score `0.0` with explicit diagnostics; revisit only when broader ranking coverage semantics are specified.
+- Missing normalized percentiles now remain `None` at the pillar-score level, and composite assembly counts only non-`None` scores toward minimum-pillar coverage.
 - Environment initialization reproducibility is addressed with bootstrap/validation scripts; keep these scripts aligned with `uv.lock`, `.python-version`, and the full runtime/dev dependency set as dependencies change, and keep `validate-env.sh` self-contained for fresh servers.
 
 Resume prompt:
@@ -189,7 +189,7 @@ Findings:
    Recommended fix: keep these deferred until after pillar assembly, but explicitly preserve anti-bias requirements in later milestones.
 5. Severity `P2`: missing-data semantics for pillar scores currently use a `0.0` fallback when RP normalization cannot produce a percentile; this is explicit but may need refinement when ranking coverage policy is formalized.
    Recommended fix: revisit only when coverage/min-required-pillar behavior is implemented so policy stays coherent.
-   Status: unchanged.
+   Status: fixed on 2026-03-18. Pillar scores now preserve missing normalized percentiles as `None`, and composite assemblies count only scored pillars toward availability and final-ranking eligibility.
 6. Severity `P3`: repo-wide Ruff `UP042` baseline findings continue to obscure changed-scope lint signal.
    Recommended fix: address the baseline in a dedicated lint batch when brought into scope.
    Status: unchanged.
@@ -336,6 +336,7 @@ Findings:
    Dependencies: later multi-pillar ranking work.
    Acceptance criteria:
    - future ranking semantics tests cover missing-data policy coherently across pillars
+   Status: fixed on 2026-03-18. Missing normalized percentiles now remain explicit `None` scores, partial assemblies keep coverage/diagnostics visible, and final rankings exclude incompletely scored names instead of coercing them to `0.0`.
 6. Severity `low`: repo-wide Ruff still fails on two registry enum findings.
    Recommended fix: convert the remaining registry enums to `StrEnum`.
    Dependencies: none.
@@ -349,5 +350,5 @@ Recommended first batch:
 4. Status: completed on 2026-03-17. Latest-only timing semantics are now explicit in the provider contract and FMP adapter, with focused regression tests.
 
 Recommended next batch:
-1. Fix `AUDIT-005` only.
-2. Keep the change scoped to missing-data fallback and ranking-coverage policy now that the six-pillar path is in place.
+1. Fix `AUDIT-006` only.
+2. Keep the change scoped to the remaining Ruff `UP042` enum findings in `src/stock_selection/factors/registry.py`.

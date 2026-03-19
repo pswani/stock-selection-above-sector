@@ -83,19 +83,19 @@ def test_growth_keeps_missing_data_and_as_of_mismatch_explicit() -> None:
     cards = score_growth(observations)
     by_ticker = {card.ticker: card for card in cards}
 
-    assert by_ticker["AAA"].score == 0.0
+    assert by_ticker["AAA"].score is None
     assert by_ticker["AAA"].coverage_ratio == pytest.approx(1.0 / 3.0)
     assert by_ticker["AAA"].diagnostics["normalization_status"] == "insufficient_peer_group"
 
-    assert by_ticker["BBB"].score == 0.0
+    assert by_ticker["BBB"].score is None
     assert by_ticker["BBB"].coverage_ratio == pytest.approx(1.0 / 3.0)
     assert by_ticker["BBB"].diagnostics["normalization_status"] == "missing_value"
 
-    assert by_ticker["CCC"].score == 0.0
+    assert by_ticker["CCC"].score is None
     assert by_ticker["CCC"].coverage_ratio == pytest.approx(1.0 / 3.0)
     assert by_ticker["CCC"].diagnostics["normalization_status"] == "missing_value"
 
-    assert by_ticker["DDD"].score == 0.0
+    assert by_ticker["DDD"].score is None
     assert by_ticker["DDD"].coverage_ratio is None
     assert by_ticker["DDD"].diagnostics["normalization_status"] == "missing_peer_group"
 

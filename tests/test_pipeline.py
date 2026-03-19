@@ -77,6 +77,28 @@ def test_build_composite_rankings_produces_full_six_pillar_rankings() -> None:
     assert rankings[-1].total_penalty == profile.penalties.rules["minimum_quality"]
 
 
+def test_build_composite_rankings_excludes_tickers_with_missing_pillar_scores() -> None:
+    settings = load_settings()
+    profile = load_weight_profile("balanced")
+    inputs = _full_inputs(date(2026, 1, 31))
+    inputs.returns_6m = {"AAA": 0.30, "BBB": 0.10, "CCC": None}
+
+    assemblies, rankings = build_composite_rankings(
+        inputs,
+        tickers=["AAA", "BBB", "CCC"],
+        as_of=date(2026, 1, 31),
+        profile=profile,
+        min_required_pillars=settings.ranking.min_required_pillars,
+        penalty_rules=[MinimumQualityPenalty()],
+    )
+
+    assembly_by_ticker = {assembly.ticker: assembly for assembly in assemblies}
+    assert assembly_by_ticker["CCC"].available_pillar_count == 5
+    assert assembly_by_ticker["CCC"].missing_pillars == ["RP"]
+    assert assembly_by_ticker["CCC"].meets_minimum_pillars is False
+    assert [result.ticker for result in rankings] == ["AAA", "BBB"]
+
+
 def test_build_explanation_cards_derives_strengths_and_risks_from_rankings() -> None:
     settings = load_settings()
     assemblies, rankings = build_composite_rankings(

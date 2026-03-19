@@ -1,8 +1,8 @@
-"""Scaffolded explainability models.
+"""Deterministic explainability models.
 
-These types support simple human-readable summaries, but they are not yet a
-full explainability layer with factor traces, confidence handling, or ranking
-diagnostics.
+These types currently support summary cards derived from ranking outputs. The
+layer is still intentionally lightweight, but it now provides a concrete,
+testable explainability surface instead of a placeholder schema only.
 """
 
 from __future__ import annotations

@@ -1,9 +1,9 @@
-"""Snapshot-only helpers for reporting intermediate ranking artifacts.
+"""Snapshot helpers for deterministic validation workflows.
 
-These utilities write deterministic CSV outputs for inspection, but they do not
-constitute a full backtest harness. Turnover, transaction costs, benchmark
-alignment, and point-in-time execution safety remain out of scope here until
-Milestone 9.
+These utilities still only write ranking snapshots, but they now complement the
+validation harness rather than standing in for it. Point-in-time-safe data
+alignment, richer execution assumptions, and broader benchmark logic remain
+separate concerns for later milestones.
 """
 
 from __future__ import annotations

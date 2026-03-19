@@ -48,4 +48,12 @@
 - The public CLI should distinguish demo-only exports from implemented pipeline-backed paths explicitly: hardcoded ranking rows now live behind `export-demo-ranking`, the old `export-sample-ranking` name remains only as a hidden deprecated alias, and RP export commands print notices that they are pipeline-backed while the RP preview path also states that it is not a final multi-pillar ranking.
 - Milestone 6 begins with the narrowest Growth contract: use `revenue_growth_yoy` from `FundamentalSnapshot` as the first `G` factor input, normalize it by peer group, and emit `PillarScoreCard` outputs via `build_growth_observations(...)`, `score_growth(...)`, and `GrowthPillarEngine`.
 - Growth currently treats stale fundamental snapshots as missing for the requested `as_of` date rather than assuming carry-forward semantics.
-- Validation/backtest snapshot utilities and explainability models must describe themselves as scaffolds until turnover, costs, benchmark alignment, point-in-time safety, and fuller ranking diagnostics are actually implemented.
+- The full six-pillar deterministic path is now implemented with:
+  - `Q` from `return_on_equity`
+  - `V` from `forward_pe`
+  - `R` from `volatility_3m`
+  - `S` from `eps_revision_90d`
+  - `build_composite_rankings(...)` as the primary composite ranking pipeline on top of the existing RP/G paths
+- Sample CLI/reporting surfaces must remain explicit about whether they are preview-only, demo-only, or final pipeline-backed exports.
+- The explainability layer now derives deterministic `ExplanationCard` outputs directly from ranking results and assemblies.
+- The validation layer now uses an explicit deterministic harness with top-k selection, turnover, transaction costs, benchmark returns, and documented assumptions rather than snapshot writing alone.

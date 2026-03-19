@@ -1,32 +1,37 @@
 # Session Handoff
 
 ## Completed
-- Implemented the narrowest Milestone 6 pillar slice for `AUDIT-003` without inventing a final multi-pillar ranking.
-- Added `src/stock_selection/scoring/growth.py` with a deterministic Growth pillar path based on `revenue_growth_yoy` from `FundamentalSnapshot`.
+- Completed the full `AUDIT-003` remediation batch by finishing the remaining deterministic pillar paths and adding a real multi-pillar ranking pipeline.
+- Added new pillar engines and scorers for:
+  - Quality via `return_on_equity`
+  - Valuation via `forward_pe`
+  - Risk via `volatility_3m`
+  - Sentiment via `eps_revision_90d`
+- Added `src/stock_selection/scoring/pipeline.py` with:
+  - `CompositeScoreInputs`
+  - `score_full_pillar_set(...)`
+  - `build_composite_rankings(...)`
+- Added pipeline-backed sample CLI/reporting consumers for:
+  - composite ranking export
+  - explanation-card export
+  - validation report export
+- Completed the `AUDIT-004` remediation batch by replacing scaffold-only behavior with real deterministic explainability and validation layers.
 - Added:
-  - `build_growth_observations(...)`
-  - `score_growth(...)`
-  - `GrowthPillarEngine`
-- Kept missing-data behavior explicit:
-  - missing or stale fundamentals become `None`
-  - peer-relative normalization still drives score/coverage/status
-  - missing normalized percentiles still fall back to `0.0` with diagnostics preserved
-- Added focused Growth tests, including a mixed `RP` + `G` partial-assembly check that still stops short of a final ranking path.
-- Tightened `AUDIT-004` explicitness by documenting that snapshot/export and explanation-card layers remain scaffolds, not full validation or explainability systems.
+  - `src/stock_selection/explainability/builders.py` for explanation-card generation from ranking outputs
+  - `src/stock_selection/backtest/validation.py` for top-k validation with turnover, transaction costs, benchmark returns, and explicit assumptions/limitations
+- Preserved the explicit preview-versus-final CLI/export semantics established for `AUDIT-002`.
 
 ## Current status
-- `AUDIT-003` is partially remediated in changed scope: the repo now has deterministic end-to-end `RP` and narrow `G` pillar slices, but true multi-pillar ranking and the remaining pillars are still unimplemented.
-- `AUDIT-004` remains deferred for full implementation, but the current scaffold limits are now explicit in docs and module docstrings so the repo does not imply validated backtesting or full explainability.
+- `AUDIT-003` is complete in changed scope: the repo now has deterministic end-to-end paths for all six pillars and a real composite ranking pipeline.
+- `AUDIT-004` is complete in changed scope: explainability and validation/backtest layers now expose real deterministic behavior instead of placeholder scaffolds.
 - Remaining gaps are primarily:
-- Quality, Valuation, Risk, and Sentiment pillars remain unimplemented, and true multi-pillar ranking is still absent (`AUDIT-003`)
-- explainability and backtest layers are still scaffolds beyond the new explicit caveats (`AUDIT-004`)
 - RP missing-data fallback semantics are explicit but still provisional (`AUDIT-005`)
 - `uv run pytest -q` passed in this session.
 - `uv run pyright` passed in this session.
 - `uv run ruff check .` still fails only on 2 pre-existing `UP042` findings in `src/stock_selection/factors/registry.py` (`AUDIT-006`).
 
 ## Next task
-- Recommended next task: continue Milestone 6 with the narrowest next pillar path after Growth, while preserving the explicit preview-versus-final ranking contract and the scaffold caveats added for validation/explainability layers.
+- Recommended next task: address `AUDIT-005` only by deciding whether the current missing-percentile `0.0` fallback remains appropriate now that full six-pillar ranking and validation behavior exist.
 
 ## Known blockers
 - `uv run ruff check .` currently fails on 2 pre-existing `UP042` findings in:
@@ -34,33 +39,48 @@
 
 ## Changed files
 - `src/stock_selection/scoring/growth.py`
+- `src/stock_selection/scoring/quality.py`
+- `src/stock_selection/scoring/valuation.py`
+- `src/stock_selection/scoring/risk.py`
+- `src/stock_selection/scoring/sentiment.py`
+- `src/stock_selection/scoring/pipeline.py`
 - `src/stock_selection/scoring/__init__.py`
 - `tests/test_growth.py`
+- `tests/test_additional_pillars.py`
+- `tests/test_pipeline.py`
 - `src/stock_selection/backtest/snapshots.py`
+- `src/stock_selection/backtest/validation.py`
+- `src/stock_selection/backtest/__init__.py`
 - `src/stock_selection/explainability/models.py`
+- `src/stock_selection/explainability/builders.py`
+- `src/stock_selection/explainability/__init__.py`
+- `src/stock_selection/reporting.py`
+- `src/stock_selection/cli/main.py`
+- `tests/test_cli.py`
+- `tests/test_reporting.py`
+- `docs/architecture.md`
 - `docs/scoring-spec.md`
 - `docs/validation-spec.md`
+- `docs/audit-findings.md`
 - `requirements/session-handoff.md`
 - `requirements/roadmap.md`
 - `requirements/decisions.md`
 - `PLANS.md`
 
 ## Validation run
-- `uv run pytest -q tests/test_growth.py tests/test_relative_performance.py tests/test_composite.py` (passed)
+- `uv run pytest -q tests/test_additional_pillars.py tests/test_pipeline.py tests/test_cli.py tests/test_reporting.py` (passed)
 - `uv run pytest -q` (passed)
-- `uv run ruff check src/stock_selection/scoring/growth.py src/stock_selection/scoring/__init__.py tests/test_growth.py` (passed)
+- `uv run ruff check src/stock_selection/scoring src/stock_selection/explainability src/stock_selection/backtest src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_additional_pillars.py tests/test_pipeline.py tests/test_cli.py tests/test_reporting.py` (passed)
 - `uv run ruff check .` (failed only on 2 pre-existing `UP042` violations in `src/stock_selection/factors/registry.py`)
 - `uv run pyright` (passed: `0 errors`)
-- `uv run pyright src/stock_selection/scoring/growth.py src/stock_selection/scoring/__init__.py tests/test_growth.py` (passed: `0 errors`)
+- `uv run pyright src/stock_selection/scoring src/stock_selection/explainability src/stock_selection/backtest src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_additional_pillars.py tests/test_pipeline.py tests/test_cli.py tests/test_reporting.py` (passed: `0 errors`)
 
 ## Hardening status
 - Highest-value hardening changes implemented:
-  - narrow deterministic Growth pillar path on top of the existing normalization contract
-  - focused partial-assembly proof that `RP` + `G` can coexist without inventing final rankings
-  - explicit scaffold caveats for snapshot/backtest and explainability layers
+  - deterministic paths for all six pillars plus a composite ranking pipeline
+  - real explanation-card generation from ranking outputs
+  - real validation harness with turnover, transaction costs, and benchmark-relative excess returns
 - What remains:
-  - `AUDIT-003`
-  - `AUDIT-004`
   - `AUDIT-005`
   - `AUDIT-006`
 
@@ -77,11 +97,11 @@ Read:
 - docs/code_review.md
 
 Then:
-1. implement only the next remediation batch for `AUDIT-003` by adding the narrowest next pillar path after Growth
-2. keep the work scoped to one pillar only and do not invent a final multi-pillar ranking
+1. implement only the next remediation batch: fix `AUDIT-005`
+2. keep the work scoped to missing-data policy for fully assembled rankings without changing unrelated formulas
 3. preserve the explicit preview-versus-final CLI/export semantics established for `AUDIT-002`
-4. preserve the scaffold caveats for validation/backtesting and explainability layers from `AUDIT-004`
-5. add/update focused tests only for the changed pillar and scoring path
+4. preserve the new deterministic ranking, explainability, and validation layers from `AUDIT-003` and `AUDIT-004`
+5. add/update focused tests only for the changed missing-data and ranking-policy path
 6. avoid unrelated refactors
 7. run targeted tests plus `uv run pytest -q`, `uv run ruff check .`, and `uv run pyright`
 8. fix defects found in the changed scope

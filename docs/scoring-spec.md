@@ -31,4 +31,12 @@ The system assumes six pillars:
 This repo includes interfaces, typed models, and baseline composite / penalty orchestration. Full factor formulas remain intentionally incomplete so Codex can implement them milestone by milestone.
 Milestone 4 now includes a complete normalization handoff from `FactorObservation` outputs into typed normalized factor observations, with deterministic DataFrame projections available for downstream consumers before any pillar scoring is applied.
 Milestone 5 is now complete for Relative Performance: the RP path builds `relative_strength_6m` factor observations, converts normalized outputs into `PillarScoreCard` results with diagnostics and coverage, groups those score cards into deterministic partial assemblies, and exposes an RP-only preview ranking/export path that remains explicit about incomplete multi-pillar coverage.
-Milestone 6 has now started with a narrow Growth slice: the repo includes a `revenue_growth_yoy` Growth pillar path that mirrors the RP contract by building typed factor observations from fundamental snapshots, normalizing them by peer group, and emitting deterministic `PillarScoreCard` outputs without claiming a final multi-pillar ranking.
+Milestone 6 now covers all six pillars with deterministic single-factor paths:
+- `RP` via `relative_strength_6m`
+- `G` via `revenue_growth_yoy`
+- `Q` via `return_on_equity`
+- `V` via `forward_pe`
+- `R` via `volatility_3m`
+- `S` via `eps_revision_90d`
+
+The repo now also includes a composite ranking pipeline that scores all six pillars, assembles complete pillar sets, applies configured weights and penalties, and emits deterministic final `RankingResult` outputs. The RP preview path remains explicit preview output, while the composite ranking path is now the implemented final ranking surface.

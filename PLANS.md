@@ -117,7 +117,7 @@ Milestones:
    - Scope: implement one pillar per sub-step with explicit formulas and missing-data behavior.
    - Acceptance criteria: all six pillars produce deterministic score cards with traces.
    - Tests: per-pillar unit tests and integration checks.
-   - Progress: Milestone 6 has started with a narrow Growth slice in `src/stock_selection/scoring/growth.py`. `build_growth_observations(...)` derives `revenue_growth_yoy` factor observations from `FundamentalSnapshot` inputs, `score_growth(...)` converts normalized outputs into `PillarScoreCard` results with explicit diagnostics and coverage, and `GrowthPillarEngine` provides the same engine contract as the existing RP path. Focused tests cover happy-path scoring, explicit missing/stale-data handling, requested-ticker engine behavior, and mixed `RP` + `G` partial assembly without inventing a final ranking path.
+   - Progress: Milestone 6 is now complete for the initial six-pillar delivery. In addition to the earlier RP and Growth paths, the repo now includes deterministic `Q`, `V`, `R`, and `S` pillar engines plus `build_composite_rankings(...)` in `src/stock_selection/scoring/pipeline.py`, which scores all six pillars, assembles complete pillar sets, applies configured weights and penalties, and emits final ranking results. Focused tests cover each added pillar, the composite ranking pipeline, explanation-card generation, validation behavior, and pipeline-backed CLI/reporting exports.
    - Dependencies: Milestones 1-5.
 
 7. **Milestone 7 — Rule-based penalties and regime sensitivity**
@@ -266,13 +266,13 @@ Findings:
    Acceptance criteria:
    - new pillar paths remain deterministic and explicit about missing data
    - sample-only ranking paths are either clearly labeled or replaced when real multi-pillar assembly exists
-   Status: partially remediated on 2026-03-17. A narrow deterministic Growth pillar slice now exists alongside RP, but Q/V/R/S and any true multi-pillar ranking path are still open.
+   Status: fixed on 2026-03-18. The repo now includes all six deterministic pillar paths plus a composite ranking pipeline and pipeline-backed sample ranking exports.
 4. Severity `P2`: explainability and backtest layers remain scaffolds, so validation-safety requirements from the docs are still mostly documented rather than implemented.
    Recommended fix: keep these deferred until later milestones, but continue treating look-ahead, turnover, cost, and benchmark alignment as explicit acceptance criteria before any validation claims.
    Dependencies: broader scoring and ranking pipeline.
    Acceptance criteria:
    - no code or docs imply backtest fidelity beyond the current scaffolded behavior
-   Status: partially remediated on 2026-03-17. Repo docs and module docstrings now state the current scaffold limits explicitly, but the layers remain functionally thin.
+   Status: fixed on 2026-03-18 for the current audit scope. The repo now includes deterministic explanation-card generation and a validation harness with turnover, transaction costs, benchmark-relative excess returns, and explicit assumptions/limitations.
 5. Severity `P3`: repo-wide Ruff still fails on two remaining `UP042` enum findings in `src/stock_selection/factors/registry.py`.
    Recommended fix: convert those enums to `StrEnum` in a dedicated lint batch.
    Dependencies: none.
@@ -349,5 +349,5 @@ Recommended first batch:
 4. Status: completed on 2026-03-17. Latest-only timing semantics are now explicit in the provider contract and FMP adapter, with focused regression tests.
 
 Recommended next batch:
-1. Continue `AUDIT-003` only by implementing the narrowest next pillar path after Growth.
-2. Keep the change scoped to one pillar without inventing final multi-pillar ranking behavior.
+1. Fix `AUDIT-005` only.
+2. Keep the change scoped to missing-data fallback and ranking-coverage policy now that the six-pillar path is in place.

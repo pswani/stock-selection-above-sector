@@ -5,7 +5,7 @@ import pytest
 from stock_selection.backtest.validation import ValidationPeriodInput, run_validation_backtest
 from stock_selection.config import load_settings, load_weight_profile
 from stock_selection.explainability import build_explanation_cards
-from stock_selection.models import EstimateSnapshot, FundamentalSnapshot
+from stock_selection.models import EstimateSnapshot, FundamentalSnapshot, RankingResult
 from stock_selection.penalties.rules import MinimumQualityPenalty
 from stock_selection.scoring import CompositeScoreInputs, build_composite_rankings
 
@@ -203,8 +203,70 @@ def test_run_validation_backtest_models_turnover_costs_and_benchmark() -> None:
     assert report.benchmark_name == "sample_sector_benchmark"
     assert len(report.periods) == 2
     assert report.periods[0].turnover == pytest.approx(1.0)
+    assert report.periods[0].buy_turnover == pytest.approx(1.0)
+    assert report.periods[0].sell_turnover == pytest.approx(0.0)
     assert report.periods[0].selected_tickers == ["AAA", "CCC"]
+    assert report.periods[0].cash_weight == pytest.approx(0.0)
     assert report.average_turnover >= 0
     assert report.cumulative_excess_return == pytest.approx(
         report.cumulative_portfolio_net_return - report.cumulative_benchmark_return
+    )
+
+
+def test_run_validation_backtest_preserves_cash_when_fewer_than_top_k_rankings() -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    _ranking_result("AAA", date(2026, 1, 31), final_score=90.0),
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            ),
+            ValidationPeriodInput(
+                as_of=date(2026, 2, 28),
+                ranking_results=[
+                    _ranking_result("AAA", date(2026, 2, 28), final_score=88.0),
+                    _ranking_result("BBB", date(2026, 2, 28), final_score=82.0),
+                ],
+                realized_returns={"AAA": 0.02, "BBB": 0.03},
+                benchmark_return=0.005,
+            ),
+        ],
+        top_k=2,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+
+    first_period = report.periods[0]
+    assert first_period.requested_top_k == 2
+    assert first_period.available_rankings == 1
+    assert first_period.selected_count == 1
+    assert first_period.invested_weight == pytest.approx(0.5)
+    assert first_period.cash_weight == pytest.approx(0.5)
+    assert first_period.portfolio_gross_return == pytest.approx(0.02)
+    assert first_period.buy_turnover == pytest.approx(0.5)
+    assert first_period.sell_turnover == pytest.approx(0.0)
+    assert first_period.turnover == pytest.approx(0.5)
+
+    second_period = report.periods[1]
+    assert second_period.invested_weight == pytest.approx(1.0)
+    assert second_period.cash_weight == pytest.approx(0.0)
+    assert second_period.buy_turnover == pytest.approx(0.5)
+    assert second_period.sell_turnover == pytest.approx(0.0)
+    assert second_period.turnover == pytest.approx(0.5)
+    assert "unallocated_cash_when_fewer_than_top_k_rankings" in report.assumptions
+    assert "cash_earns_zero_return_when_portfolio_is_underfilled" in report.limitations
+
+
+def _ranking_result(ticker: str, as_of: date, *, final_score: float) -> RankingResult:
+    return RankingResult(
+        ticker=ticker,
+        as_of=as_of,
+        profile_name="balanced",
+        weighted_score=final_score,
+        total_penalty=0.0,
+        final_score=final_score,
+        pillar_scores={"RP": final_score},
     )

@@ -27,6 +27,7 @@ Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, an
 - The latest audit batch is now complete: the misleading sample ranking export is replaced by an explicit public `export-demo-ranking` command, the old name remains only as a hidden deprecated alias, and RP CLI exports now declare themselves pipeline-backed while preview output remains explicit about not being final multi-pillar ranking.
 - Milestone 6 now covers all six pillars and a deterministic composite ranking path, with pipeline-backed sample exports for final ranking, explanation cards, and validation results.
 - The validation layer now includes a deterministic top-k harness with turnover, transaction costs, benchmark-relative excess returns, and explicit assumptions/limitations.
+- The validation harness now also keeps partial cash allocation explicit when fewer than `top_k` names are available, and period outputs expose invested weight, cash weight, and buy/sell turnover.
 - The explainability layer now includes deterministic explanation-card generation derived from ranking outputs.
 - The top open review-driven gap is now deeper validation realism, followed by richer explainability diagnostics when needed.
 

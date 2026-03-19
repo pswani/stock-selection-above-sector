@@ -136,6 +136,7 @@ Milestones:
    - Scope: monthly/quarterly rebalance, sector-neutral/global top-k, benchmark comparison, turnover/cost model, anti-bias guards, false-positive and regime tests.
    - Acceptance criteria: reproducible validation run from fixtures with documented assumptions/limits.
    - Tests: integration/snapshot tests for backtest outputs and guardrails.
+   - Progress: the validation harness now preserves explicit residual cash when fewer than `top_k` names are available and surfaces invested weight, cash weight, and buy/sell turnover in period results instead of silently reweighting underfilled periods to 100% invested.
    - Dependencies: Milestones 1-8.
 
 10. **Milestone 10 — CLI/reporting/export workflow hardening**

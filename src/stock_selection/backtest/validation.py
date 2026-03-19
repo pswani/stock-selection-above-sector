@@ -16,8 +16,15 @@ class ValidationPeriodInput(BaseModel):
 
 class ValidationPeriodResult(BaseModel):
     as_of: date
+    requested_top_k: int = Field(ge=1)
+    available_rankings: int = Field(ge=0)
+    selected_count: int = Field(ge=1)
     selected_tickers: list[str]
+    invested_weight: float = Field(ge=0, le=1)
+    cash_weight: float = Field(ge=0, le=1)
     portfolio_gross_return: float
+    buy_turnover: float = Field(ge=0)
+    sell_turnover: float = Field(ge=0)
     turnover: float = Field(ge=0)
     transaction_cost: float = Field(ge=0)
     portfolio_net_return: float
@@ -73,9 +80,14 @@ def run_validation_backtest(
                 f"(missing={missing_returns}, as_of={period_input.as_of.isoformat()})"
             )
 
-        target_weight = 1.0 / len(selected_tickers)
+        target_weight = 1.0 / top_k
         current_weights = {ticker: target_weight for ticker in selected_tickers}
-        turnover = _calculate_turnover(previous_weights, current_weights)
+        buy_turnover, sell_turnover, turnover = _calculate_turnover_components(
+            previous_weights,
+            current_weights,
+        )
+        invested_weight = sum(current_weights.values())
+        cash_weight = 1.0 - invested_weight
         gross_return = sum(
             period_input.realized_returns[ticker] * current_weights[ticker]
             for ticker in selected_tickers
@@ -87,8 +99,15 @@ def run_validation_backtest(
         periods.append(
             ValidationPeriodResult(
                 as_of=period_input.as_of,
+                requested_top_k=top_k,
+                available_rankings=len(period_input.ranking_results),
+                selected_count=len(selected_tickers),
                 selected_tickers=selected_tickers,
+                invested_weight=invested_weight,
+                cash_weight=cash_weight,
                 portfolio_gross_return=gross_return,
+                buy_turnover=buy_turnover,
+                sell_turnover=sell_turnover,
                 turnover=turnover,
                 transaction_cost=transaction_cost,
                 portfolio_net_return=net_return,
@@ -116,11 +135,13 @@ def run_validation_backtest(
             "rebalance_on_each_as_of_snapshot",
             "transaction_costs_applied_from_turnover",
             "realized_returns_supplied_externally_and_assumed_forward_aligned",
+            "unallocated_cash_when_fewer_than_top_k_rankings",
         ],
         limitations=[
             "no_live_data_validation",
             "no_slippage_model_beyond_transaction_cost_bps",
             "benchmark_return_must_be_supplied_explicitly",
+            "cash_earns_zero_return_when_portfolio_is_underfilled",
         ],
         average_turnover=average_turnover,
         cumulative_portfolio_net_return=cumulative_portfolio_return,
@@ -141,14 +162,17 @@ def _select_top_ranked(
     return ranked[:top_k]
 
 
-def _calculate_turnover(
+def _calculate_turnover_components(
     previous_weights: dict[str, float],
     current_weights: dict[str, float],
-) -> float:
-    if not previous_weights and current_weights:
-        return 1.0
+) -> tuple[float, float, float]:
     all_tickers = set(previous_weights) | set(current_weights)
-    return 0.5 * sum(
-        abs(current_weights.get(ticker, 0.0) - previous_weights.get(ticker, 0.0))
+    buy_turnover = sum(
+        max(current_weights.get(ticker, 0.0) - previous_weights.get(ticker, 0.0), 0.0)
         for ticker in all_tickers
     )
+    sell_turnover = sum(
+        max(previous_weights.get(ticker, 0.0) - current_weights.get(ticker, 0.0), 0.0)
+        for ticker in all_tickers
+    )
+    return buy_turnover, sell_turnover, max(buy_turnover, sell_turnover)

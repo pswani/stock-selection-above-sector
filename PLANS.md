@@ -134,19 +134,21 @@ Milestones:
    - Dependencies: Milestones 1-7.
 
 9. **Milestone 9 — Validation/backtest harness**
-   - Scope: monthly/quarterly rebalance, sector-neutral/global top-k, benchmark comparison, turnover/cost model, anti-bias guards, false-positive and regime tests.
-   - Acceptance criteria: reproducible validation run from fixtures with documented assumptions/limits.
-   - Tests: integration/snapshot tests for backtest outputs and guardrails.
-   - Progress: the validation harness now preserves explicit residual cash when fewer than `top_k` names are available and surfaces invested weight, cash weight, and buy/sell turnover in period results instead of silently reweighting underfilled periods to 100% invested.
-   - Progress: the harness now also validates unique period dates, ranking-result `as_of` alignment, and non-blank benchmark names, and the reporting layer can export deterministic validation-period diagnostics including benchmark-relative gap in bps.
-   - Progress: the harness now also exposes next rebalance anchors and inferred holding-period days, and reporting/CLI surfaces can export validation summaries plus validation periods from the implemented pipeline-backed sample path.
-   - Dependencies: Milestones 1-8.
+    - Scope: monthly/quarterly rebalance, sector-neutral/global top-k, benchmark comparison, turnover/cost model, anti-bias guards, false-positive and regime tests.
+    - Acceptance criteria: reproducible validation run from fixtures with documented assumptions/limits.
+    - Tests: integration/snapshot tests for backtest outputs and guardrails.
+    - Progress: the validation harness now preserves explicit residual cash when fewer than `top_k` names are available and surfaces invested weight, cash weight, and buy/sell turnover in period results instead of silently reweighting underfilled periods to 100% invested.
+    - Progress: the harness now also validates unique period dates, ranking-result `as_of` alignment, and non-blank benchmark names, and the reporting layer can export deterministic validation-period diagnostics including benchmark-relative gap in bps.
+    - Progress: the harness now also exposes next rebalance anchors and inferred holding-period days, and reporting/CLI surfaces can export validation summaries plus validation periods from the implemented pipeline-backed sample path.
+    - Progress: benchmark metadata is now a first-class validation contract, period inputs must arrive in explicit increasing order rather than relying on implicit sorting, and validation outputs now include period index, fill ratio, and underfilled diagnostics for easier interpretation.
+    - Dependencies: Milestones 1-8.
 
 10. **Milestone 10 — CLI/reporting/export workflow hardening**
     - Scope: finalize CLI entry points for scoring, ranking, export, validation reports.
     - Acceptance criteria: documented CLI workflow runs end-to-end on sample fixtures.
     - Tests: CLI smoke tests + export contract tests.
     - Progress: CLI now includes pipeline-backed sample exports for explanation cards and validation reports in addition to the existing RP exports and explicit demo-only ranking command.
+    - Progress: CLI now also includes a pipeline-backed analysis bundle export, and explanation/reporting outputs expose richer ranking coverage and benchmark metadata details without changing the established semantics of existing commands.
     - Dependencies: Milestones 1-9.
 
 Validation per milestone:

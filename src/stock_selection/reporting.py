@@ -51,6 +51,12 @@ EXPLANATION_CARD_BASE_COLUMNS = [
     "as_of",
     "profile_name",
     "rank_position",
+    "available_pillar_count",
+    "minimum_required_pillars",
+    "meets_minimum_pillars",
+    "missing_pillar_count",
+    "penalty_count",
+    "score_gap_to_next_rank",
     "final_score",
     "weighted_score",
     "total_penalty",
@@ -63,6 +69,9 @@ EXPLANATION_CARD_BASE_COLUMNS = [
 ]
 VALIDATION_SUMMARY_BASE_COLUMNS = [
     "benchmark_name",
+    "benchmark_type",
+    "benchmark_methodology",
+    "benchmark_return_alignment",
     "top_k",
     "transaction_cost_bps",
     "period_count",
@@ -79,16 +88,22 @@ VALIDATION_SUMMARY_BASE_COLUMNS = [
 ]
 VALIDATION_PERIOD_BASE_COLUMNS = [
     "benchmark_name",
+    "benchmark_type",
+    "benchmark_methodology",
+    "benchmark_return_alignment",
     "top_k",
     "transaction_cost_bps",
     "periods_with_underfill",
     "max_cash_weight",
+    "period_index",
     "as_of",
     "next_rebalance_as_of",
     "holding_period_days",
     "requested_top_k",
     "available_rankings",
     "selected_count",
+    "selection_fill_ratio",
+    "underfilled",
     "selected_tickers",
     "invested_weight",
     "cash_weight",
@@ -218,6 +233,12 @@ def explanation_cards_to_frame(cards: list[ExplanationCard]) -> pd.DataFrame:
             "as_of": card.as_of.isoformat(),
             "profile_name": card.profile_name,
             "rank_position": card.rank_position,
+            "available_pillar_count": card.available_pillar_count,
+            "minimum_required_pillars": card.minimum_required_pillars,
+            "meets_minimum_pillars": card.meets_minimum_pillars,
+            "missing_pillar_count": card.missing_pillar_count,
+            "penalty_count": card.penalty_count,
+            "score_gap_to_next_rank": card.score_gap_to_next_rank,
             "final_score": card.final_score,
             "weighted_score": card.weighted_score,
             "total_penalty": card.total_penalty,
@@ -243,6 +264,9 @@ def validation_report_summary_to_frame(report: ValidationReport) -> pd.DataFrame
     rows = [
         {
             "benchmark_name": report.benchmark_name,
+            "benchmark_type": report.benchmark_type,
+            "benchmark_methodology": report.benchmark_methodology,
+            "benchmark_return_alignment": report.benchmark_return_alignment,
             "top_k": report.top_k,
             "transaction_cost_bps": report.transaction_cost_bps,
             "period_count": len(report.periods),
@@ -267,10 +291,14 @@ def validation_report_periods_to_frame(report: ValidationReport) -> pd.DataFrame
         rows.append(
             {
                 "benchmark_name": report.benchmark_name,
+                "benchmark_type": report.benchmark_type,
+                "benchmark_methodology": report.benchmark_methodology,
+                "benchmark_return_alignment": report.benchmark_return_alignment,
                 "top_k": report.top_k,
                 "transaction_cost_bps": report.transaction_cost_bps,
                 "periods_with_underfill": report.periods_with_underfill,
                 "max_cash_weight": report.max_cash_weight,
+                "period_index": period.period_index,
                 "as_of": period.as_of.isoformat(),
                 "next_rebalance_as_of": (
                     period.next_rebalance_as_of.isoformat()
@@ -281,6 +309,8 @@ def validation_report_periods_to_frame(report: ValidationReport) -> pd.DataFrame
                 "requested_top_k": period.requested_top_k,
                 "available_rankings": period.available_rankings,
                 "selected_count": period.selected_count,
+                "selection_fill_ratio": period.selection_fill_ratio,
+                "underfilled": period.underfilled,
                 "selected_tickers": ",".join(period.selected_tickers),
                 "invested_weight": period.invested_weight,
                 "cash_weight": period.cash_weight,
@@ -357,6 +387,23 @@ def write_validation_report_summary_csv(
     output.parent.mkdir(parents=True, exist_ok=True)
     validation_report_summary_to_frame(report).to_csv(output, index=False)
     return output
+
+
+def write_validation_report_bundle_csvs(
+    report: ValidationReport,
+    *,
+    output_prefix: str | Path,
+) -> tuple[Path, Path]:
+    prefix = Path(output_prefix)
+    summary_path = write_validation_report_summary_csv(
+        report,
+        prefix.parent / f"{prefix.name}-summary.csv",
+    )
+    periods_path = write_validation_report_periods_csv(
+        report,
+        prefix.parent / f"{prefix.name}-periods.csv",
+    )
+    return summary_path, periods_path
 
 
 def _prefixed_union_columns(

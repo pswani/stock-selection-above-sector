@@ -30,10 +30,11 @@ Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, an
 - The validation harness now also keeps partial cash allocation explicit when fewer than `top_k` names are available, and period outputs expose invested weight, cash weight, and buy/sell turnover.
 - The validation harness now also validates unique period dates, ranking-result date alignment, and non-blank benchmark names, and period outputs expose benchmark-relative gap in bps for easier reporting.
 - The validation harness now also exposes next rebalance anchors and inferred holding-period days, and reporting exports cover both validation summaries and validation periods.
-- The explainability layer now includes deterministic explanation-card generation derived from ranking outputs, plus structured explanation/reporting details for top pillars, weakest pillars, penalties, and missing coverage.
-- Reporting now has deterministic export helpers for explanation cards, validation summaries, and validation periods in addition to the earlier ranking and assembly exports.
-- CLI now includes pipeline-backed sample exports for explanation cards and validation reports alongside the existing demo-only ranking command and RP exports.
-- The top open review-driven gap is now deeper validation realism, followed by richer explainability diagnostics when needed.
+- The validation harness now also requires explicit benchmark metadata, rejects non-increasing period order instead of silently re-sorting, and period outputs expose fill-ratio / underfill diagnostics in addition to holding-period and benchmark-relative fields.
+- The explainability layer now includes deterministic explanation-card generation derived from ranking outputs, plus structured explanation/reporting details for top pillars, weakest pillars, penalties, missing coverage, rank-adjacent score gap, and pillar-count status.
+- Reporting now has deterministic export helpers for explanation cards, validation summaries, validation periods, and validation-report CSV bundles in addition to the earlier ranking and assembly exports.
+- CLI now includes pipeline-backed sample exports for explanation cards, validation reports, and a full analysis bundle alongside the existing demo-only ranking command and RP exports.
+- The top open review-driven gap is now deeper validation realism around externally supplied benchmark methodology and execution assumptions, rather than missing reporting surfaces.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

@@ -6,7 +6,11 @@ from pathlib import Path
 import typer
 from rich import print
 
-from stock_selection.backtest.validation import ValidationPeriodInput, run_validation_backtest
+from stock_selection.backtest.validation import (
+    BenchmarkType,
+    ValidationPeriodInput,
+    run_validation_backtest,
+)
 from stock_selection.config import load_settings, load_weight_profile
 from stock_selection.explainability import build_explanation_cards
 from stock_selection.models import EstimateSnapshot, FundamentalSnapshot
@@ -16,8 +20,7 @@ from stock_selection.reporting import (
     write_pillar_score_cards_csv,
     write_ranking_csv,
     write_relative_performance_preview_csv,
-    write_validation_report_periods_csv,
-    write_validation_report_summary_csv,
+    write_validation_report_bundle_csvs,
 )
 from stock_selection.scoring.composite import build_ranking_result
 from stock_selection.scoring.pipeline import CompositeScoreInputs, build_composite_rankings
@@ -44,6 +47,18 @@ PIPELINE_BACKED_EXPLANATION_NOTICE = (
 PIPELINE_BACKED_VALIDATION_NOTICE = (
     "pipeline-backed validation export: writes deterministic validation report outputs from "
     "the implemented composite ranking and validation paths"
+)
+PIPELINE_BACKED_ANALYSIS_BUNDLE_NOTICE = (
+    "pipeline-backed analysis bundle export: writes deterministic ranking, explanation, "
+    "and validation report outputs from the implemented composite and validation paths"
+)
+VALIDATION_BENCHMARK_TYPE_OPTION = typer.Option(
+    BenchmarkType.SECTOR_PEER_AVERAGE,
+    help="Benchmark type for the validation metadata",
+)
+VALIDATION_BENCHMARK_METHODOLOGY_OPTION = typer.Option(
+    None,
+    help="Optional benchmark methodology override for the validation metadata",
 )
 
 SAMPLE_RP_RETURNS_6M = {
@@ -116,6 +131,36 @@ def _sample_rankings_for(as_of: date):
         profile=profile,
         min_required_pillars=settings.ranking.min_required_pillars,
         penalty_rules=[MinimumQualityPenalty()],
+    )
+
+
+def _sample_validation_report(
+    *,
+    benchmark_type: BenchmarkType = BenchmarkType.SECTOR_PEER_AVERAGE,
+    benchmark_methodology: str | None = None,
+):
+    _, january_rankings = _sample_rankings_for(date(2026, 1, 31))
+    _, february_rankings = _sample_rankings_for(date(2026, 2, 28))
+    return run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=january_rankings,
+                realized_returns={"AAA": 0.04, "BBB": -0.02, "CCC": 0.01},
+                benchmark_return=0.012,
+            ),
+            ValidationPeriodInput(
+                as_of=date(2026, 2, 28),
+                ranking_results=february_rankings,
+                realized_returns={"AAA": 0.01, "BBB": 0.03, "CCC": -0.01},
+                benchmark_return=0.009,
+            ),
+        ],
+        top_k=2,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+        benchmark_type=benchmark_type,
+        benchmark_methodology=benchmark_methodology,
     )
 
 
@@ -242,39 +287,55 @@ def export_sample_validation_report(
         "outputs/reports/sample-validation",
         help="Destination prefix for summary and periods CSVs",
     ),
+    benchmark_type: BenchmarkType = VALIDATION_BENCHMARK_TYPE_OPTION,
+    benchmark_methodology: str | None = VALIDATION_BENCHMARK_METHODOLOGY_OPTION,
 ) -> None:
     """Export a pipeline-backed sample validation report from the implemented paths."""
-    _, january_rankings = _sample_rankings_for(date(2026, 1, 31))
-    _, february_rankings = _sample_rankings_for(date(2026, 2, 28))
-    report = run_validation_backtest(
-        [
-            ValidationPeriodInput(
-                as_of=date(2026, 1, 31),
-                ranking_results=january_rankings,
-                realized_returns={"AAA": 0.04, "BBB": -0.02, "CCC": 0.01},
-                benchmark_return=0.012,
-            ),
-            ValidationPeriodInput(
-                as_of=date(2026, 2, 28),
-                ranking_results=february_rankings,
-                realized_returns={"AAA": 0.01, "BBB": 0.03, "CCC": -0.01},
-                benchmark_return=0.009,
-            ),
-        ],
-        top_k=2,
-        transaction_cost_bps=10.0,
-        benchmark_name="sample_sector_benchmark",
+    report = _sample_validation_report(
+        benchmark_type=benchmark_type,
+        benchmark_methodology=benchmark_methodology,
     )
-    prefix = Path(output_prefix)
-    summary_path = write_validation_report_summary_csv(
+    summary_path, periods_path = write_validation_report_bundle_csvs(
         report,
-        prefix.parent / f"{prefix.name}-summary.csv",
-    )
-    periods_path = write_validation_report_periods_csv(
-        report,
-        prefix.parent / f"{prefix.name}-periods.csv",
+        output_prefix=output_prefix,
     )
     print(f"[bold green]{PIPELINE_BACKED_VALIDATION_NOTICE}[/bold green]")
+    print(f"[bold blue]wrote[/bold blue] {summary_path}")
+    print(f"[bold blue]wrote[/bold blue] {periods_path}")
+
+
+@app.command()
+def export_sample_analysis_bundle(
+    output_dir: str = typer.Option(
+        "outputs/reports/sample-analysis-bundle",
+        help="Destination directory for ranking, explanation, and validation outputs",
+    ),
+    as_of: str = typer.Option("2026-01-31", help="As-of date in YYYY-MM-DD format"),
+    benchmark_type: BenchmarkType = VALIDATION_BENCHMARK_TYPE_OPTION,
+    benchmark_methodology: str | None = VALIDATION_BENCHMARK_METHODOLOGY_OPTION,
+) -> None:
+    """Export a pipeline-backed bundle of ranking, explanation, and validation outputs."""
+    as_of_date = date.fromisoformat(as_of)
+    output_path = Path(output_dir)
+    assemblies, rankings = _sample_rankings_for(as_of_date)
+    cards = build_explanation_cards(rankings, assemblies)
+    report = _sample_validation_report(
+        benchmark_type=benchmark_type,
+        benchmark_methodology=benchmark_methodology,
+    )
+
+    ranking_path = write_ranking_csv(rankings, output_path / "sample-ranking.csv")
+    explanation_path = write_explanation_cards_csv(
+        cards,
+        output_path / "sample-explanations.csv",
+    )
+    summary_path, periods_path = write_validation_report_bundle_csvs(
+        report,
+        output_prefix=output_path / "sample-validation",
+    )
+    print(f"[bold green]{PIPELINE_BACKED_ANALYSIS_BUNDLE_NOTICE}[/bold green]")
+    print(f"[bold blue]wrote[/bold blue] {ranking_path}")
+    print(f"[bold blue]wrote[/bold blue] {explanation_path}")
     print(f"[bold blue]wrote[/bold blue] {summary_path}")
     print(f"[bold blue]wrote[/bold blue] {periods_path}")
 

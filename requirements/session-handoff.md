@@ -38,6 +38,12 @@
   - validation period outputs now expose `next_rebalance_as_of`, inferred `holding_period_days`, and report-level min/max holding-period diagnostics
   - reporting now exports both validation summaries and validation periods
   - CLI now has pipeline-backed sample exports for explanation cards and validation reports while preserving the explicit demo-only ranking command contract
+- Completed the next productization batch for benchmark/reporting workflow hardening:
+  - validation reports now store explicit benchmark type, methodology, and return-alignment metadata instead of relying on benchmark name alone
+  - validation backtests now reject non-increasing period input order rather than silently re-sorting dates
+  - validation outputs now expose `period_index`, `selection_fill_ratio`, and `underfilled` diagnostics in both Python/reporting surfaces
+  - explanation cards now expose pillar-count coverage, minimum-pillar status, penalty count, and score gap to the next rank
+  - CLI/reporting now support a pipeline-backed analysis bundle export that writes ranking, explanation, and validation outputs together
 
 ## Current status
 - `AUDIT-003` is complete in changed scope: the repo now has deterministic end-to-end paths for all six pillars and a real composite ranking pipeline.
@@ -47,13 +53,13 @@
 - The audit backlog is now fully complete.
 - The validation harness is now more realistic for partial-coverage periods because it preserves underfilled cash exposure explicitly instead of assuming full reinvestment.
 - Validation/reporting semantics are now tighter and more inspectable: date alignment, benchmark labeling, underfill diagnostics, and explanation details are explicit in the Python/reporting surfaces.
-- Pipeline-backed explanation and validation exports now exist at the CLI layer for the implemented sample paths, while demo-only versus preview-only semantics remain explicit.
+- Pipeline-backed explanation, validation, and bundled analysis exports now exist at the CLI layer for the implemented sample paths, while demo-only versus preview-only semantics remain explicit.
 - `uv run pytest -q` passed in this session.
 - `uv run pyright` passed in this session.
 - `uv run ruff check .` passed in this session.
 
 ## Next task
-- Recommended next task: continue the milestone by deciding whether to deepen benchmark methodology and benchmark-type modeling further, or to expand reporting around validation summaries and periodized assumptions.
+- Recommended next task: continue the milestone by deciding whether to deepen benchmark methodology toward point-in-time benchmark sourcing and benchmark-family fixtures, or to expand execution/slippage realism beyond the current deterministic turnover-cost model.
 
 ## Known blockers
 - None for the audit backlog.
@@ -98,10 +104,10 @@
   - clean repo-wide Ruff baseline after the final audit lint fix
   - more realistic partial-coverage validation behavior through explicit residual cash and buy/sell turnover reporting
   - richer deterministic explanation/reporting surfaces for validation periods and ranking explanations
-  - pipeline-backed CLI exports for explanation cards and validation reports, plus explicit validation periodization metadata
+  - pipeline-backed CLI exports for explanation cards, validation reports, and bundled analysis outputs, plus explicit validation periodization and benchmark metadata
 - What remains:
   - deeper validation realism beyond the current harness
-  - a decision on whether to deepen benchmark methodology and benchmark-type modeling beyond the current explicit assumptions
+  - point-in-time benchmark sourcing, benchmark-family fixture coverage, and richer execution/slippage modeling remain future work
 
 ## Exact next prompt
 Read:
@@ -116,8 +122,8 @@ Read:
 - docs/code_review.md
 
 Then:
-1. continue the larger validation-and-explainability milestone after the reporting-surface enhancement
-2. keep the work scoped to benchmark methodology, benchmark-type modeling, periodization, and validation/reporting semantics rather than changing scoring formulas or existing CLI command semantics
+1. continue the larger validation-and-explainability milestone after the benchmark-metadata and analysis-bundle enhancement
+2. keep the work scoped to benchmark methodology, benchmark-family fixtures, periodization, and validation/reporting semantics rather than changing scoring formulas or existing CLI command semantics
 3. preserve the explicit preview-versus-final CLI/export semantics established for `AUDIT-002`
 4. preserve the deterministic ranking, missing-data, explainability, and validation layers established by `AUDIT-003` through `AUDIT-006`
 5. add/update focused tests only for the changed validation, explainability, and reporting paths

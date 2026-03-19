@@ -65,3 +65,7 @@
 - Validation backtests now require unique period dates, per-period ranking/result date alignment, and non-blank benchmark names to make reporting semantics harder to misuse.
 - Validation period outputs now use the next rebalance `as_of` as the inferred period end when available, expose holding-period days explicitly, and report report-level min/max holding-period diagnostics.
 - Pipeline-backed CLI sample exports now exist for explanation cards and validation report outputs; the demo-only ranking export remains explicitly non-pipeline-backed.
+- Validation reporting now treats benchmark metadata as a first-class contract: benchmark type, methodology, and return-alignment assumptions are stored on `ValidationReport` and exported alongside summary/period diagnostics.
+- Validation backtests now reject non-increasing period input order instead of silently re-sorting dates, so period sequencing assumptions are explicit and easier to audit.
+- Explanation cards now also expose rank-adjacent score gap, pillar-count coverage, minimum-pillar status, and penalty counts so ranking explanations connect more directly to missing-data and penalty state.
+- Reporting/CLI now support a pipeline-backed analysis bundle export that writes ranking, explanation, and validation artifacts together without changing the semantics of the existing demo-only or preview-only commands.

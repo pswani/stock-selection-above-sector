@@ -1,7 +1,11 @@
 from datetime import date
 from pathlib import Path
 
-from stock_selection.backtest.validation import ValidationPeriodInput, run_validation_backtest
+from stock_selection.backtest.validation import (
+    BenchmarkType,
+    ValidationPeriodInput,
+    run_validation_backtest,
+)
 from stock_selection.explainability import ExplanationCard, ExplanationPillarDetail
 from stock_selection.models import PillarScoreCard, RankingResult
 from stock_selection.reporting import (
@@ -17,6 +21,7 @@ from stock_selection.reporting import (
     write_pillar_score_cards_csv,
     write_ranking_csv,
     write_relative_performance_preview_csv,
+    write_validation_report_bundle_csvs,
     write_validation_report_periods_csv,
     write_validation_report_summary_csv,
 )
@@ -223,6 +228,12 @@ def test_explanation_cards_to_frame_has_richer_columns() -> None:
         as_of=date(2026, 1, 31),
         profile_name="balanced",
         rank_position=1,
+        available_pillar_count=6,
+        minimum_required_pillars=6,
+        meets_minimum_pillars=True,
+        missing_pillar_count=0,
+        penalty_count=1,
+        score_gap_to_next_rank=2.5,
         final_score=88.0,
         weighted_score=90.0,
         total_penalty=2.0,
@@ -249,6 +260,9 @@ def test_explanation_cards_to_frame_has_richer_columns() -> None:
     assert frame.loc[0, "ticker"] == "AAA"
     assert frame.loc[0, "profile_name"] == "balanced"
     assert frame.loc[0, "rank_position"] == 1
+    assert frame.loc[0, "available_pillar_count"] == 6
+    assert frame.loc[0, "penalty_count"] == 1
+    assert frame.loc[0, "score_gap_to_next_rank"] == 2.5
     assert frame.loc[0, "penalty_rules"] == "minimum_quality"
     assert frame.loc[0, "top_pillars_1_pillar"] == "G"
     assert frame.loc[0, "top_pillars_2_score"] == 95.0
@@ -261,6 +275,12 @@ def test_write_explanation_cards_csv(tmp_path: Path) -> None:
         as_of=date(2026, 1, 31),
         profile_name="balanced",
         rank_position=1,
+        available_pillar_count=6,
+        minimum_required_pillars=6,
+        meets_minimum_pillars=True,
+        missing_pillar_count=0,
+        penalty_count=1,
+        score_gap_to_next_rank=2.5,
         final_score=88.0,
         weighted_score=90.0,
         total_penalty=2.0,
@@ -302,22 +322,30 @@ def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnosti
         top_k=2,
         transaction_cost_bps=10.0,
         benchmark_name="sample_sector_benchmark",
+        benchmark_type=BenchmarkType.SECTOR_PEER_AVERAGE,
+        benchmark_methodology="sample_sector_average_total_return",
     )
 
     frame = validation_report_periods_to_frame(report)
 
     assert frame.columns.tolist() == [
         "benchmark_name",
+        "benchmark_type",
+        "benchmark_methodology",
+        "benchmark_return_alignment",
         "top_k",
         "transaction_cost_bps",
         "periods_with_underfill",
         "max_cash_weight",
+        "period_index",
         "as_of",
         "next_rebalance_as_of",
         "holding_period_days",
         "requested_top_k",
         "available_rankings",
         "selected_count",
+        "selection_fill_ratio",
+        "underfilled",
         "selected_tickers",
         "invested_weight",
         "cash_weight",
@@ -332,8 +360,10 @@ def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnosti
         "benchmark_relative_gap_bps",
     ]
     assert frame.loc[0, "benchmark_name"] == "sample_sector_benchmark"
+    assert frame.loc[0, "benchmark_type"] == BenchmarkType.SECTOR_PEER_AVERAGE
     assert frame.loc[0, "cash_weight"] == 0.5
     assert frame.loc[0, "next_rebalance_as_of"] is None
+    assert bool(frame.loc[0, "underfilled"]) is True
     assert frame.loc[0, "benchmark_relative_gap_bps"] == 95.0
 
 
@@ -360,12 +390,17 @@ def test_validation_report_summary_to_frame_exposes_assumptions_and_periodizatio
         top_k=2,
         transaction_cost_bps=10.0,
         benchmark_name="sample_sector_benchmark",
+        benchmark_type=BenchmarkType.SECTOR_ETF,
+        benchmark_methodology="sample_sector_etf_total_return",
     )
 
     frame = validation_report_summary_to_frame(report)
 
     assert frame.columns.tolist() == [
         "benchmark_name",
+        "benchmark_type",
+        "benchmark_methodology",
+        "benchmark_return_alignment",
         "top_k",
         "transaction_cost_bps",
         "period_count",
@@ -381,6 +416,8 @@ def test_validation_report_summary_to_frame_exposes_assumptions_and_periodizatio
         "limitations",
     ]
     assert frame.loc[0, "period_count"] == 1
+    assert frame.loc[0, "benchmark_type"] == BenchmarkType.SECTOR_ETF
+    assert frame.loc[0, "benchmark_methodology"] == "sample_sector_etf_total_return"
     assert "unallocated_cash_when_fewer_than_top_k_rankings" in frame.loc[0, "assumptions"]
 
 
@@ -442,3 +479,37 @@ def test_write_validation_report_summary_csv(tmp_path: Path) -> None:
     path = write_validation_report_summary_csv(report, tmp_path / "validation-summary.csv")
 
     assert path.exists()
+
+
+def test_write_validation_report_bundle_csvs(tmp_path: Path) -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    RankingResult(
+                        ticker="AAA",
+                        as_of=date(2026, 1, 31),
+                        profile_name="balanced",
+                        weighted_score=90.0,
+                        total_penalty=0.0,
+                        final_score=90.0,
+                        pillar_scores={"RP": 90.0},
+                    )
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            )
+        ],
+        top_k=1,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+
+    summary_path, periods_path = write_validation_report_bundle_csvs(
+        report,
+        output_prefix=tmp_path / "bundle/validation",
+    )
+
+    assert summary_path.exists()
+    assert periods_path.exists()

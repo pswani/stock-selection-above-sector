@@ -65,9 +65,37 @@ def test_export_sample_validation_report(tmp_path: Path) -> None:
     prefix = tmp_path / "sample-validation"
     result = runner.invoke(
         app,
-        ["export-sample-validation-report", "--output-prefix", str(prefix)],
+        [
+            "export-sample-validation-report",
+            "--output-prefix",
+            str(prefix),
+            "--benchmark-type",
+            "sector_etf",
+            "--benchmark-methodology",
+            "sample_sector_etf_total_return",
+        ],
     )
     assert result.exit_code == 0
     assert (tmp_path / "sample-validation-summary.csv").exists()
     assert (tmp_path / "sample-validation-periods.csv").exists()
     assert "pipeline-backed validation export" in result.stdout
+
+
+def test_export_sample_analysis_bundle(tmp_path: Path) -> None:
+    output_dir = tmp_path / "analysis-bundle"
+    result = runner.invoke(
+        app,
+        [
+            "export-sample-analysis-bundle",
+            "--output-dir",
+            str(output_dir),
+            "--benchmark-type",
+            "market_index",
+        ],
+    )
+    assert result.exit_code == 0
+    assert (output_dir / "sample-ranking.csv").exists()
+    assert (output_dir / "sample-explanations.csv").exists()
+    assert (output_dir / "sample-validation-summary.csv").exists()
+    assert (output_dir / "sample-validation-periods.csv").exists()
+    assert "pipeline-backed analysis bundle export" in result.stdout

@@ -52,6 +52,12 @@ def build_explanation_cards(
             f"{ranking.weighted_score:.2f} with {len(ranking.penalty_traces)} penalties "
             f"and assembly status {assembly.assembly_status}."
         )
+        next_ranking = rankings[rank_position] if rank_position < len(rankings) else None
+        score_gap_to_next_rank = (
+            ranking.final_score - next_ranking.final_score
+            if next_ranking is not None
+            else None
+        )
 
         cards.append(
             ExplanationCard(
@@ -59,6 +65,12 @@ def build_explanation_cards(
                 as_of=ranking.as_of,
                 profile_name=ranking.profile_name,
                 rank_position=rank_position,
+                available_pillar_count=assembly.available_pillar_count,
+                minimum_required_pillars=assembly.min_required_pillars,
+                meets_minimum_pillars=assembly.meets_minimum_pillars,
+                missing_pillar_count=len(assembly.missing_pillars),
+                penalty_count=len(ranking.penalty_traces),
+                score_gap_to_next_rank=score_gap_to_next_rank,
                 final_score=ranking.final_score,
                 weighted_score=ranking.weighted_score,
                 total_penalty=ranking.total_penalty,

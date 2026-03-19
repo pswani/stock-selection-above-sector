@@ -39,11 +39,13 @@ This repository provides an opinionated foundation for a sector-relative stock s
    - Composite ranking exports
    - Explainability card exports
    - Validation report exports
+   - Pipeline-backed analysis bundle exports
    - Human-readable reports
 8. **Validation layer**
    - Unit tests
    - Reproducible sample fixtures
    - Cost/turnover-aware validation harness
+   - Explicit benchmark metadata contract
    - Backtest and snapshot comparison hooks
 
 ## Deliberate boundaries

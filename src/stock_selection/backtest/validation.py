@@ -1,10 +1,39 @@
 from __future__ import annotations
 
 from datetime import date
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, field_validator
 
 from stock_selection.models import RankingResult
+
+
+class BenchmarkType(StrEnum):
+    SECTOR_PEER_AVERAGE = "sector_peer_average"
+    SECTOR_ETF = "sector_etf"
+    MARKET_INDEX = "market_index"
+    CUSTOM = "custom"
+
+
+class BenchmarkReturnAlignment(StrEnum):
+    FORWARD_PERIOD_TOTAL_RETURN = "forward_period_total_return"
+
+
+class ValidationBenchmarkSpec(BaseModel):
+    name: str
+    benchmark_type: BenchmarkType = BenchmarkType.CUSTOM
+    methodology: str
+    return_alignment: BenchmarkReturnAlignment = (
+        BenchmarkReturnAlignment.FORWARD_PERIOD_TOTAL_RETURN
+    )
+
+    @field_validator("name", "methodology")
+    @classmethod
+    def value_must_not_be_blank(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("benchmark metadata values must not be blank")
+        return normalized
 
 
 class ValidationPeriodInput(BaseModel):
@@ -27,12 +56,15 @@ class ValidationPeriodInput(BaseModel):
 
 
 class ValidationPeriodResult(BaseModel):
+    period_index: int = Field(ge=1)
     as_of: date
     next_rebalance_as_of: date | None = None
     holding_period_days: int | None = Field(default=None, ge=1)
     requested_top_k: int = Field(ge=1)
     available_rankings: int = Field(ge=0)
     selected_count: int = Field(ge=1)
+    selection_fill_ratio: float = Field(ge=0, le=1)
+    underfilled: bool
     selected_tickers: list[str]
     invested_weight: float = Field(ge=0, le=1)
     cash_weight: float = Field(ge=0, le=1)
@@ -49,6 +81,11 @@ class ValidationPeriodResult(BaseModel):
 
 class ValidationReport(BaseModel):
     benchmark_name: str
+    benchmark_type: BenchmarkType = BenchmarkType.CUSTOM
+    benchmark_methodology: str
+    benchmark_return_alignment: BenchmarkReturnAlignment = (
+        BenchmarkReturnAlignment.FORWARD_PERIOD_TOTAL_RETURN
+    )
     top_k: int = Field(ge=1)
     transaction_cost_bps: float = Field(ge=0)
     periods_with_underfill: int = Field(ge=0)
@@ -78,16 +115,25 @@ def run_validation_backtest(
     top_k: int,
     transaction_cost_bps: float,
     benchmark_name: str,
+    benchmark_type: BenchmarkType = BenchmarkType.CUSTOM,
+    benchmark_methodology: str | None = None,
 ) -> ValidationReport:
     if top_k < 1:
         raise ValueError("top_k must be at least 1")
     if not benchmark_name.strip():
         raise ValueError("benchmark_name must not be blank")
-    ordered_inputs = sorted(period_inputs, key=lambda item: item.as_of)
-    if not ordered_inputs:
+    if not period_inputs:
         raise ValueError("Validation backtest requires at least one period input")
+    ordered_inputs = list(period_inputs)
     if len({item.as_of for item in ordered_inputs}) != len(ordered_inputs):
         raise ValueError("Validation backtest requires unique as_of dates per period")
+    _validate_period_sequence(ordered_inputs)
+    benchmark_spec = ValidationBenchmarkSpec(
+        name=benchmark_name,
+        benchmark_type=benchmark_type,
+        methodology=benchmark_methodology
+        or _default_benchmark_methodology(benchmark_type),
+    )
 
     periods: list[ValidationPeriodResult] = []
     previous_weights: dict[str, float] = {}
@@ -134,12 +180,15 @@ def run_validation_backtest(
 
         periods.append(
             ValidationPeriodResult(
+                period_index=index + 1,
                 as_of=period_input.as_of,
                 next_rebalance_as_of=next_rebalance_as_of,
                 holding_period_days=holding_period_days,
                 requested_top_k=top_k,
                 available_rankings=len(period_input.ranking_results),
                 selected_count=len(selected_tickers),
+                selection_fill_ratio=len(selected_tickers) / top_k,
+                underfilled=len(selected_tickers) < top_k,
                 selected_tickers=selected_tickers,
                 invested_weight=invested_weight,
                 cash_weight=cash_weight,
@@ -172,7 +221,10 @@ def run_validation_backtest(
     cumulative_excess_return = cumulative_portfolio_return - cumulative_benchmark_return
 
     return ValidationReport(
-        benchmark_name=benchmark_name.strip(),
+        benchmark_name=benchmark_spec.name,
+        benchmark_type=benchmark_spec.benchmark_type,
+        benchmark_methodology=benchmark_spec.methodology,
+        benchmark_return_alignment=benchmark_spec.return_alignment,
         top_k=top_k,
         transaction_cost_bps=transaction_cost_bps,
         periods_with_underfill=periods_with_underfill,
@@ -185,7 +237,14 @@ def run_validation_backtest(
             "rebalance_on_each_as_of_snapshot",
             "transaction_costs_applied_from_turnover",
             "realized_returns_supplied_externally_and_assumed_forward_aligned",
-            "benchmark_return_assumed_forward_aligned_to_same_period",
+            (
+                "benchmark_return_assumed_forward_aligned_to_same_period:"
+                f"{benchmark_spec.return_alignment}"
+            ),
+            (
+                "benchmark_methodology_supplied_explicitly:"
+                f"{benchmark_spec.benchmark_type}:{benchmark_spec.methodology}"
+            ),
             "next_rebalance_as_of_used_as_period_end_when_subsequent_period_exists",
             "unallocated_cash_when_fewer_than_top_k_rankings",
         ],
@@ -193,7 +252,7 @@ def run_validation_backtest(
             "no_live_data_validation",
             "no_slippage_model_beyond_transaction_cost_bps",
             "benchmark_return_must_be_supplied_explicitly",
-            "benchmark_series_type_and_construction_are_external_to_this_harness",
+            "benchmark_series_construction_and_constituent_selection_are_external_to_this_harness",
             "cash_earns_zero_return_when_portfolio_is_underfilled",
             "final_period_has_no_inferred_period_end_without_a_subsequent_rebalance_date",
         ],
@@ -215,6 +274,15 @@ def _validate_period_alignment(period_input: ValidationPeriodInput) -> None:
             "Validation backtest requires ranking_results as_of to match the period input "
             f"(as_of={period_input.as_of.isoformat()}, mismatched={mismatched})"
         )
+
+
+def _validate_period_sequence(period_inputs: list[ValidationPeriodInput]) -> None:
+    for previous, current in zip(period_inputs, period_inputs[1:], strict=False):
+        if current.as_of <= previous.as_of:
+            raise ValueError(
+                "Validation backtest requires period inputs in strictly increasing as_of "
+                "order without relying on implicit re-sorting"
+            )
 
 
 def _select_top_ranked(
@@ -243,3 +311,13 @@ def _calculate_turnover_components(
         for ticker in all_tickers
     )
     return buy_turnover, sell_turnover, max(buy_turnover, sell_turnover)
+
+
+def _default_benchmark_methodology(benchmark_type: BenchmarkType) -> str:
+    if benchmark_type is BenchmarkType.SECTOR_PEER_AVERAGE:
+        return "externally_supplied_sector_peer_average_total_return"
+    if benchmark_type is BenchmarkType.SECTOR_ETF:
+        return "externally_supplied_sector_etf_total_return"
+    if benchmark_type is BenchmarkType.MARKET_INDEX:
+        return "externally_supplied_market_index_total_return"
+    return "externally_supplied_custom_total_return"

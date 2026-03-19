@@ -22,6 +22,12 @@ class ExplanationCard(BaseModel):
     as_of: date
     profile_name: str
     rank_position: int = Field(ge=1)
+    available_pillar_count: int = Field(ge=0)
+    minimum_required_pillars: int = Field(ge=1)
+    meets_minimum_pillars: bool
+    missing_pillar_count: int = Field(ge=0)
+    penalty_count: int = Field(ge=0)
+    score_gap_to_next_rank: float | None = None
     final_score: float
     weighted_score: float
     total_penalty: float

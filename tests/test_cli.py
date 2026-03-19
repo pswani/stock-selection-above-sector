@@ -51,3 +51,23 @@ def test_export_sample_relative_performance_preview(tmp_path: Path) -> None:
     assert out.exists()
     assert "pipeline-backed RP preview export" in result.stdout
     assert "not a final multi-pillar ranking" in result.stdout
+
+
+def test_export_sample_explanations(tmp_path: Path) -> None:
+    out = tmp_path / "sample-explanations.csv"
+    result = runner.invoke(app, ["export-sample-explanations", "--output", str(out)])
+    assert result.exit_code == 0
+    assert out.exists()
+    assert "pipeline-backed explanation export" in result.stdout
+
+
+def test_export_sample_validation_report(tmp_path: Path) -> None:
+    prefix = tmp_path / "sample-validation"
+    result = runner.invoke(
+        app,
+        ["export-sample-validation-report", "--output-prefix", str(prefix)],
+    )
+    assert result.exit_code == 0
+    assert (tmp_path / "sample-validation-summary.csv").exists()
+    assert (tmp_path / "sample-validation-periods.csv").exists()
+    assert "pipeline-backed validation export" in result.stdout

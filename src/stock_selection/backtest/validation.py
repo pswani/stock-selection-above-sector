@@ -28,6 +28,8 @@ class ValidationPeriodInput(BaseModel):
 
 class ValidationPeriodResult(BaseModel):
     as_of: date
+    next_rebalance_as_of: date | None = None
+    holding_period_days: int | None = Field(default=None, ge=1)
     requested_top_k: int = Field(ge=1)
     available_rankings: int = Field(ge=0)
     selected_count: int = Field(ge=1)
@@ -51,6 +53,8 @@ class ValidationReport(BaseModel):
     transaction_cost_bps: float = Field(ge=0)
     periods_with_underfill: int = Field(ge=0)
     max_cash_weight: float = Field(ge=0, le=1)
+    min_holding_period_days: int | None = Field(default=None, ge=1)
+    max_holding_period_days: int | None = Field(default=None, ge=1)
     periods: list[ValidationPeriodResult] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
@@ -90,8 +94,16 @@ def run_validation_backtest(
     cumulative_portfolio = 1.0
     cumulative_benchmark = 1.0
 
-    for period_input in ordered_inputs:
+    for index, period_input in enumerate(ordered_inputs):
         _validate_period_alignment(period_input)
+        next_rebalance_as_of = (
+            ordered_inputs[index + 1].as_of if index + 1 < len(ordered_inputs) else None
+        )
+        holding_period_days = (
+            (next_rebalance_as_of - period_input.as_of).days
+            if next_rebalance_as_of is not None
+            else None
+        )
         selected = _select_top_ranked(period_input.ranking_results, top_k=top_k)
         selected_tickers = [result.ticker for result in selected]
         missing_returns = sorted(
@@ -123,6 +135,8 @@ def run_validation_backtest(
         periods.append(
             ValidationPeriodResult(
                 as_of=period_input.as_of,
+                next_rebalance_as_of=next_rebalance_as_of,
+                holding_period_days=holding_period_days,
                 requested_top_k=top_k,
                 available_rankings=len(period_input.ranking_results),
                 selected_count=len(selected_tickers),
@@ -148,6 +162,11 @@ def run_validation_backtest(
     average_turnover = sum(period.turnover for period in periods) / len(periods)
     periods_with_underfill = sum(1 for period in periods if period.cash_weight > 0)
     max_cash_weight = max(period.cash_weight for period in periods)
+    holding_period_values = [
+        period.holding_period_days
+        for period in periods
+        if period.holding_period_days is not None
+    ]
     cumulative_portfolio_return = cumulative_portfolio - 1.0
     cumulative_benchmark_return = cumulative_benchmark - 1.0
     cumulative_excess_return = cumulative_portfolio_return - cumulative_benchmark_return
@@ -158,6 +177,8 @@ def run_validation_backtest(
         transaction_cost_bps=transaction_cost_bps,
         periods_with_underfill=periods_with_underfill,
         max_cash_weight=max_cash_weight,
+        min_holding_period_days=min(holding_period_values, default=None),
+        max_holding_period_days=max(holding_period_values, default=None),
         periods=periods,
         assumptions=[
             "equal_weight_top_k_selection",
@@ -165,6 +186,7 @@ def run_validation_backtest(
             "transaction_costs_applied_from_turnover",
             "realized_returns_supplied_externally_and_assumed_forward_aligned",
             "benchmark_return_assumed_forward_aligned_to_same_period",
+            "next_rebalance_as_of_used_as_period_end_when_subsequent_period_exists",
             "unallocated_cash_when_fewer_than_top_k_rankings",
         ],
         limitations=[
@@ -173,6 +195,7 @@ def run_validation_backtest(
             "benchmark_return_must_be_supplied_explicitly",
             "benchmark_series_type_and_construction_are_external_to_this_harness",
             "cash_earns_zero_return_when_portfolio_is_underfilled",
+            "final_period_has_no_inferred_period_end_without_a_subsequent_rebalance_date",
         ],
         average_turnover=average_turnover,
         cumulative_portfolio_net_return=cumulative_portfolio_return,

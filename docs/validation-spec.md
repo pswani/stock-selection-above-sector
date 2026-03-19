@@ -21,12 +21,14 @@ Add snapshot-style comparisons when:
 - `src/stock_selection/backtest/validation.py` now provides a deterministic validation harness with explicit top-k selection, turnover, transaction costs, benchmark-relative excess returns, and stated assumptions/limitations.
 - `src/stock_selection/backtest/snapshots.py` remains the snapshot export utility used alongside that harness.
 - `src/stock_selection/explainability` now provides deterministic explanation-card generation from ranking outputs, including structured top/weakest pillar details, missing-pillar disclosure, and penalty-rule disclosure.
-- `src/stock_selection/reporting.py` now provides deterministic reporting/export helpers for validation periods and explanation cards so the new diagnostics are inspectable without ad hoc serialization.
-- Underfilled periods now remain partially in cash instead of reweighting the available names to 100%; period results expose requested-versus-selected counts, invested weight, cash weight, buy/sell turnover, and benchmark-relative gap in bps explicitly.
+- `src/stock_selection/reporting.py` now provides deterministic reporting/export helpers for validation summaries, validation periods, and explanation cards so the new diagnostics are inspectable without ad hoc serialization.
+- Pipeline-backed sample CLI exports now exist for explanation cards and validation reports, while the demo ranking command remains explicitly demo-only.
+- Underfilled periods now remain partially in cash instead of reweighting the available names to 100%; period results expose requested-versus-selected counts, invested weight, cash weight, buy/sell turnover, next rebalance anchor, inferred holding-period days, and benchmark-relative gap in bps explicitly.
 
 ## Remaining limits
 - The validation harness depends on externally supplied realized returns and benchmark returns; it does not solve point-in-time data sourcing by itself.
 - Slippage, market impact, richer benchmark handling, and broader rebalance policies are still future work.
 - Cash currently earns an explicit `0.0` return when a period is underfilled; interest on idle capital is still future work.
 - Benchmark series construction and type selection remain external assumptions; the harness validates alignment and labeling more explicitly, but it does not infer or verify benchmark methodology on its own.
+- The final validation period still has no inferred period end unless a subsequent rebalance date is supplied.
 - No repo output should be described as production-ready validation evidence unless the timing-safety and execution-assumption gaps are explicitly addressed.

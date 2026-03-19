@@ -6,14 +6,21 @@ from pathlib import Path
 import typer
 from rich import print
 
+from stock_selection.backtest.validation import ValidationPeriodInput, run_validation_backtest
 from stock_selection.config import load_settings, load_weight_profile
+from stock_selection.explainability import build_explanation_cards
+from stock_selection.models import EstimateSnapshot, FundamentalSnapshot
 from stock_selection.penalties.rules import MinimumQualityPenalty
 from stock_selection.reporting import (
+    write_explanation_cards_csv,
     write_pillar_score_cards_csv,
     write_ranking_csv,
     write_relative_performance_preview_csv,
+    write_validation_report_periods_csv,
+    write_validation_report_summary_csv,
 )
 from stock_selection.scoring.composite import build_ranking_result
+from stock_selection.scoring.pipeline import CompositeScoreInputs, build_composite_rankings
 from stock_selection.scoring.relative_performance import RelativePerformancePillarEngine
 
 app = typer.Typer(add_completion=False)
@@ -30,6 +37,14 @@ PIPELINE_BACKED_RP_PREVIEW_NOTICE = (
     "pipeline-backed RP preview export: writes output from the implemented RP partial-assembly "
     "preview path, not a final multi-pillar ranking"
 )
+PIPELINE_BACKED_EXPLANATION_NOTICE = (
+    "pipeline-backed explanation export: writes deterministic explanation cards from the "
+    "implemented composite ranking and explainability paths"
+)
+PIPELINE_BACKED_VALIDATION_NOTICE = (
+    "pipeline-backed validation export: writes deterministic validation report outputs from "
+    "the implemented composite ranking and validation paths"
+)
 
 SAMPLE_RP_RETURNS_6M = {
     "AAA": 0.30,
@@ -41,6 +56,67 @@ SAMPLE_RP_PEER_GROUPS = {
     "BBB": "sector:tech",
     "CCC": "sector:tech",
 }
+
+
+def _sample_composite_inputs(as_of: date) -> CompositeScoreInputs:
+    return CompositeScoreInputs(
+        peer_groups={"AAA": "sector:tech", "BBB": "sector:tech", "CCC": "sector:tech"},
+        returns_6m={"AAA": 0.30, "BBB": 0.10, "CCC": 0.20},
+        volatility_3m={"AAA": 0.18, "BBB": 0.34, "CCC": 0.24},
+        fundamentals={
+            "AAA": FundamentalSnapshot(
+                ticker="AAA",
+                as_of=as_of,
+                revenue_growth_yoy=0.24,
+                return_on_equity=0.21,
+            ),
+            "BBB": FundamentalSnapshot(
+                ticker="BBB",
+                as_of=as_of,
+                revenue_growth_yoy=0.07,
+                return_on_equity=0.08,
+            ),
+            "CCC": FundamentalSnapshot(
+                ticker="CCC",
+                as_of=as_of,
+                revenue_growth_yoy=0.15,
+                return_on_equity=0.14,
+            ),
+        },
+        estimates={
+            "AAA": EstimateSnapshot(
+                ticker="AAA",
+                as_of=as_of,
+                forward_pe=20.0,
+                eps_revision_90d=0.12,
+            ),
+            "BBB": EstimateSnapshot(
+                ticker="BBB",
+                as_of=as_of,
+                forward_pe=33.0,
+                eps_revision_90d=-0.05,
+            ),
+            "CCC": EstimateSnapshot(
+                ticker="CCC",
+                as_of=as_of,
+                forward_pe=26.0,
+                eps_revision_90d=0.03,
+            ),
+        },
+    )
+
+
+def _sample_rankings_for(as_of: date):
+    settings = load_settings()
+    profile = load_weight_profile("balanced")
+    return build_composite_rankings(
+        _sample_composite_inputs(as_of),
+        tickers=["AAA", "BBB", "CCC"],
+        as_of=as_of,
+        profile=profile,
+        min_required_pillars=settings.ranking.min_required_pillars,
+        penalty_rules=[MinimumQualityPenalty()],
+    )
 
 
 @app.command()
@@ -141,6 +217,66 @@ def export_sample_relative_performance_preview(
     path = write_relative_performance_preview_csv(preview_ranks, Path(output))
     print(f"[bold green]{PIPELINE_BACKED_RP_PREVIEW_NOTICE}[/bold green]")
     print(f"[bold blue]wrote[/bold blue] {path}")
+
+
+@app.command()
+def export_sample_explanations(
+    output: str = typer.Option(
+        "outputs/reports/sample-explanations.csv",
+        help="Destination CSV path",
+    ),
+    as_of: str = typer.Option("2026-01-31", help="As-of date in YYYY-MM-DD format"),
+) -> None:
+    """Export pipeline-backed explanation cards from the composite ranking path."""
+    as_of_date = date.fromisoformat(as_of)
+    assemblies, rankings = _sample_rankings_for(as_of_date)
+    cards = build_explanation_cards(rankings, assemblies)
+    path = write_explanation_cards_csv(cards, Path(output))
+    print(f"[bold green]{PIPELINE_BACKED_EXPLANATION_NOTICE}[/bold green]")
+    print(f"[bold blue]wrote[/bold blue] {path}")
+
+
+@app.command()
+def export_sample_validation_report(
+    output_prefix: str = typer.Option(
+        "outputs/reports/sample-validation",
+        help="Destination prefix for summary and periods CSVs",
+    ),
+) -> None:
+    """Export a pipeline-backed sample validation report from the implemented paths."""
+    _, january_rankings = _sample_rankings_for(date(2026, 1, 31))
+    _, february_rankings = _sample_rankings_for(date(2026, 2, 28))
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=january_rankings,
+                realized_returns={"AAA": 0.04, "BBB": -0.02, "CCC": 0.01},
+                benchmark_return=0.012,
+            ),
+            ValidationPeriodInput(
+                as_of=date(2026, 2, 28),
+                ranking_results=february_rankings,
+                realized_returns={"AAA": 0.01, "BBB": 0.03, "CCC": -0.01},
+                benchmark_return=0.009,
+            ),
+        ],
+        top_k=2,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+    prefix = Path(output_prefix)
+    summary_path = write_validation_report_summary_csv(
+        report,
+        prefix.parent / f"{prefix.name}-summary.csv",
+    )
+    periods_path = write_validation_report_periods_csv(
+        report,
+        prefix.parent / f"{prefix.name}-periods.csv",
+    )
+    print(f"[bold green]{PIPELINE_BACKED_VALIDATION_NOTICE}[/bold green]")
+    print(f"[bold blue]wrote[/bold blue] {summary_path}")
+    print(f"[bold blue]wrote[/bold blue] {periods_path}")
 
 
 if __name__ == "__main__":

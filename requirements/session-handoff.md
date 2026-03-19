@@ -34,6 +34,10 @@
   - validation period outputs now expose benchmark-relative gap in bps and report-level underfill diagnostics
   - explanation cards now include structured pillar details, assembly status, missing-pillar disclosure, and penalty-rule lists
   - reporting now exports deterministic DataFrames/CSVs for explanation cards and validation periods
+- Continued the larger milestone with benchmark periodization and pipeline-backed reporting consumers:
+  - validation period outputs now expose `next_rebalance_as_of`, inferred `holding_period_days`, and report-level min/max holding-period diagnostics
+  - reporting now exports both validation summaries and validation periods
+  - CLI now has pipeline-backed sample exports for explanation cards and validation reports while preserving the explicit demo-only ranking command contract
 
 ## Current status
 - `AUDIT-003` is complete in changed scope: the repo now has deterministic end-to-end paths for all six pillars and a real composite ranking pipeline.
@@ -43,24 +47,28 @@
 - The audit backlog is now fully complete.
 - The validation harness is now more realistic for partial-coverage periods because it preserves underfilled cash exposure explicitly instead of assuming full reinvestment.
 - Validation/reporting semantics are now tighter and more inspectable: date alignment, benchmark labeling, underfill diagnostics, and explanation details are explicit in the Python/reporting surfaces.
+- Pipeline-backed explanation and validation exports now exist at the CLI layer for the implemented sample paths, while demo-only versus preview-only semantics remain explicit.
 - `uv run pytest -q` passed in this session.
 - `uv run pyright` passed in this session.
 - `uv run ruff check .` passed in this session.
 
 ## Next task
-- Recommended next task: continue the milestone by deciding whether to add pipeline-backed CLI/export consumers for the richer validation and explanation reporting surfaces, or to deepen benchmark methodology/periodization further.
+- Recommended next task: continue the milestone by deciding whether to deepen benchmark methodology and benchmark-type modeling further, or to expand reporting around validation summaries and periodized assumptions.
 
 ## Known blockers
 - None for the audit backlog.
 
 ## Changed files
+- `src/stock_selection/cli/main.py`
 - `src/stock_selection/explainability/models.py`
 - `src/stock_selection/explainability/builders.py`
 - `src/stock_selection/explainability/__init__.py`
 - `src/stock_selection/backtest/validation.py`
 - `src/stock_selection/reporting.py`
 - `tests/test_pipeline.py`
+- `tests/test_cli.py`
 - `docs/validation-spec.md`
+- `docs/architecture.md`
 - `tests/test_reporting.py`
 - `requirements/session-handoff.md`
 - `requirements/roadmap.md`
@@ -68,6 +76,9 @@
 - `PLANS.md`
 
 ## Validation run
+- `uv run pytest -q tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed)
+- `uv run ruff check src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed)
+- `uv run pyright src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed: `0 errors`)
 - `uv run pytest -q tests/test_pipeline.py tests/test_reporting.py` (passed)
 - `uv run ruff check src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py tests/test_pipeline.py tests/test_reporting.py` (passed)
 - `uv run pyright src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py tests/test_pipeline.py tests/test_reporting.py` (passed: `0 errors`)
@@ -87,9 +98,10 @@
   - clean repo-wide Ruff baseline after the final audit lint fix
   - more realistic partial-coverage validation behavior through explicit residual cash and buy/sell turnover reporting
   - richer deterministic explanation/reporting surfaces for validation periods and ranking explanations
+  - pipeline-backed CLI exports for explanation cards and validation reports, plus explicit validation periodization metadata
 - What remains:
   - deeper validation realism beyond the current harness
-  - a decision on whether to add pipeline-backed CLI/export consumers for the richer validation/explanation report surfaces
+  - a decision on whether to deepen benchmark methodology and benchmark-type modeling beyond the current explicit assumptions
 
 ## Exact next prompt
 Read:
@@ -105,7 +117,7 @@ Read:
 
 Then:
 1. continue the larger validation-and-explainability milestone after the reporting-surface enhancement
-2. keep the work scoped to benchmark methodology, periodization, and possible pipeline-backed validation/explanation exports rather than changing scoring formulas or existing CLI command semantics
+2. keep the work scoped to benchmark methodology, benchmark-type modeling, periodization, and validation/reporting semantics rather than changing scoring formulas or existing CLI command semantics
 3. preserve the explicit preview-versus-final CLI/export semantics established for `AUDIT-002`
 4. preserve the deterministic ranking, missing-data, explainability, and validation layers established by `AUDIT-003` through `AUDIT-006`
 5. add/update focused tests only for the changed validation, explainability, and reporting paths

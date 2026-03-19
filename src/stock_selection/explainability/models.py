@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ExplanationPillarDetail(BaseModel):
@@ -21,6 +21,7 @@ class ExplanationCard(BaseModel):
     ticker: str
     as_of: date
     profile_name: str
+    rank_position: int = Field(ge=1)
     final_score: float
     weighted_score: float
     total_penalty: float

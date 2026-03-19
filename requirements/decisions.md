@@ -63,3 +63,5 @@
 - Explanation cards now expose structured top/weakest pillar details, penalty-rule names, assembly status, and missing-pillar lists in addition to the existing summary/strength/risk strings.
 - Reporting now includes deterministic export surfaces for explanation cards and validation periods so benchmark-relative and cash/turnover diagnostics remain explicit outside Python objects.
 - Validation backtests now require unique period dates, per-period ranking/result date alignment, and non-blank benchmark names to make reporting semantics harder to misuse.
+- Validation period outputs now use the next rebalance `as_of` as the inferred period end when available, expose holding-period days explicitly, and report report-level min/max holding-period diagnostics.
+- Pipeline-backed CLI sample exports now exist for explanation cards and validation report outputs; the demo-only ranking export remains explicitly non-pipeline-backed.

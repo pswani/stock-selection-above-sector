@@ -114,6 +114,7 @@ def test_build_explanation_cards_derives_strengths_and_risks_from_rankings() -> 
     assert cards[0].ticker == "AAA"
     assert cards[0].as_of == date(2026, 1, 31)
     assert cards[0].profile_name == "balanced"
+    assert cards[0].rank_position == 1
     assert cards[0].strengths
     assert cards[0].top_pillars
     assert cards[0].top_pillars[0].pillar in {"RP", "G", "Q", "V", "R", "S"}
@@ -213,6 +214,8 @@ def test_run_validation_backtest_models_turnover_costs_and_benchmark() -> None:
     assert report.periods[0].sell_turnover == pytest.approx(0.0)
     assert report.periods[0].selected_tickers == ["AAA", "CCC"]
     assert report.periods[0].cash_weight == pytest.approx(0.0)
+    assert report.periods[0].next_rebalance_as_of == date(2026, 2, 28)
+    assert report.periods[0].holding_period_days == 28
     assert report.periods[0].benchmark_relative_gap_bps == pytest.approx(
         report.periods[0].excess_return * 10_000.0
     )
@@ -267,11 +270,17 @@ def test_run_validation_backtest_preserves_cash_when_fewer_than_top_k_rankings()
     assert second_period.turnover == pytest.approx(0.5)
     assert report.periods_with_underfill == 1
     assert report.max_cash_weight == pytest.approx(0.5)
+    assert report.min_holding_period_days == 28
+    assert report.max_holding_period_days == 28
     assert report.benchmark_name == "sample_sector_benchmark"
     assert "unallocated_cash_when_fewer_than_top_k_rankings" in report.assumptions
     assert "benchmark_return_assumed_forward_aligned_to_same_period" in report.assumptions
     assert (
         "benchmark_series_type_and_construction_are_external_to_this_harness"
+        in report.limitations
+    )
+    assert (
+        "final_period_has_no_inferred_period_end_without_a_subsequent_rebalance_date"
         in report.limitations
     )
     assert "cash_earns_zero_return_when_portfolio_is_underfilled" in report.limitations

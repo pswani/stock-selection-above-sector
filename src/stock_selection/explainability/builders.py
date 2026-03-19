@@ -14,7 +14,7 @@ def build_explanation_cards(
 ) -> list[ExplanationCard]:
     assembly_by_ticker = {assembly.ticker: assembly for assembly in assemblies}
     cards: list[ExplanationCard] = []
-    for ranking in rankings:
+    for rank_position, ranking in enumerate(rankings, start=1):
         assembly = assembly_by_ticker.get(ranking.ticker)
         if assembly is None:
             raise ValueError(
@@ -58,6 +58,7 @@ def build_explanation_cards(
                 ticker=ranking.ticker,
                 as_of=ranking.as_of,
                 profile_name=ranking.profile_name,
+                rank_position=rank_position,
                 final_score=ranking.final_score,
                 weighted_score=ranking.weighted_score,
                 total_penalty=ranking.total_penalty,

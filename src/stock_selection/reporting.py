@@ -50,6 +50,7 @@ EXPLANATION_CARD_BASE_COLUMNS = [
     "ticker",
     "as_of",
     "profile_name",
+    "rank_position",
     "final_score",
     "weighted_score",
     "total_penalty",
@@ -60,6 +61,22 @@ EXPLANATION_CARD_BASE_COLUMNS = [
     "strengths",
     "risks",
 ]
+VALIDATION_SUMMARY_BASE_COLUMNS = [
+    "benchmark_name",
+    "top_k",
+    "transaction_cost_bps",
+    "period_count",
+    "periods_with_underfill",
+    "max_cash_weight",
+    "min_holding_period_days",
+    "max_holding_period_days",
+    "average_turnover",
+    "cumulative_portfolio_net_return",
+    "cumulative_benchmark_return",
+    "cumulative_excess_return",
+    "assumptions",
+    "limitations",
+]
 VALIDATION_PERIOD_BASE_COLUMNS = [
     "benchmark_name",
     "top_k",
@@ -67,6 +84,8 @@ VALIDATION_PERIOD_BASE_COLUMNS = [
     "periods_with_underfill",
     "max_cash_weight",
     "as_of",
+    "next_rebalance_as_of",
+    "holding_period_days",
     "requested_top_k",
     "available_rankings",
     "selected_count",
@@ -198,6 +217,7 @@ def explanation_cards_to_frame(cards: list[ExplanationCard]) -> pd.DataFrame:
             "ticker": card.ticker,
             "as_of": card.as_of.isoformat(),
             "profile_name": card.profile_name,
+            "rank_position": card.rank_position,
             "final_score": card.final_score,
             "weighted_score": card.weighted_score,
             "total_penalty": card.total_penalty,
@@ -219,6 +239,28 @@ def explanation_cards_to_frame(cards: list[ExplanationCard]) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=columns)
 
 
+def validation_report_summary_to_frame(report: ValidationReport) -> pd.DataFrame:
+    rows = [
+        {
+            "benchmark_name": report.benchmark_name,
+            "top_k": report.top_k,
+            "transaction_cost_bps": report.transaction_cost_bps,
+            "period_count": len(report.periods),
+            "periods_with_underfill": report.periods_with_underfill,
+            "max_cash_weight": report.max_cash_weight,
+            "min_holding_period_days": report.min_holding_period_days,
+            "max_holding_period_days": report.max_holding_period_days,
+            "average_turnover": report.average_turnover,
+            "cumulative_portfolio_net_return": report.cumulative_portfolio_net_return,
+            "cumulative_benchmark_return": report.cumulative_benchmark_return,
+            "cumulative_excess_return": report.cumulative_excess_return,
+            "assumptions": "|".join(report.assumptions),
+            "limitations": "|".join(report.limitations),
+        }
+    ]
+    return pd.DataFrame(rows, columns=VALIDATION_SUMMARY_BASE_COLUMNS)
+
+
 def validation_report_periods_to_frame(report: ValidationReport) -> pd.DataFrame:
     rows = []
     for period in report.periods:
@@ -230,6 +272,12 @@ def validation_report_periods_to_frame(report: ValidationReport) -> pd.DataFrame
                 "periods_with_underfill": report.periods_with_underfill,
                 "max_cash_weight": report.max_cash_weight,
                 "as_of": period.as_of.isoformat(),
+                "next_rebalance_as_of": (
+                    period.next_rebalance_as_of.isoformat()
+                    if period.next_rebalance_as_of is not None
+                    else None
+                ),
+                "holding_period_days": period.holding_period_days,
                 "requested_top_k": period.requested_top_k,
                 "available_rankings": period.available_rankings,
                 "selected_count": period.selected_count,
@@ -298,6 +346,16 @@ def write_validation_report_periods_csv(
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     validation_report_periods_to_frame(report).to_csv(output, index=False)
+    return output
+
+
+def write_validation_report_summary_csv(
+    report: ValidationReport,
+    path: str | Path,
+) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    validation_report_summary_to_frame(report).to_csv(output, index=False)
     return output
 
 

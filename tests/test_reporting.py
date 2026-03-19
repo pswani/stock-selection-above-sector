@@ -11,12 +11,14 @@ from stock_selection.reporting import (
     ranking_results_to_frame,
     relative_performance_preview_ranks_to_frame,
     validation_report_periods_to_frame,
+    validation_report_summary_to_frame,
     write_explanation_cards_csv,
     write_pillar_score_assemblies_csv,
     write_pillar_score_cards_csv,
     write_ranking_csv,
     write_relative_performance_preview_csv,
     write_validation_report_periods_csv,
+    write_validation_report_summary_csv,
 )
 from stock_selection.scoring import (
     RelativePerformancePillarEngine,
@@ -220,6 +222,7 @@ def test_explanation_cards_to_frame_has_richer_columns() -> None:
         ticker="AAA",
         as_of=date(2026, 1, 31),
         profile_name="balanced",
+        rank_position=1,
         final_score=88.0,
         weighted_score=90.0,
         total_penalty=2.0,
@@ -245,6 +248,7 @@ def test_explanation_cards_to_frame_has_richer_columns() -> None:
 
     assert frame.loc[0, "ticker"] == "AAA"
     assert frame.loc[0, "profile_name"] == "balanced"
+    assert frame.loc[0, "rank_position"] == 1
     assert frame.loc[0, "penalty_rules"] == "minimum_quality"
     assert frame.loc[0, "top_pillars_1_pillar"] == "G"
     assert frame.loc[0, "top_pillars_2_score"] == 95.0
@@ -256,6 +260,7 @@ def test_write_explanation_cards_csv(tmp_path: Path) -> None:
         ticker="AAA",
         as_of=date(2026, 1, 31),
         profile_name="balanced",
+        rank_position=1,
         final_score=88.0,
         weighted_score=90.0,
         total_penalty=2.0,
@@ -308,6 +313,8 @@ def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnosti
         "periods_with_underfill",
         "max_cash_weight",
         "as_of",
+        "next_rebalance_as_of",
+        "holding_period_days",
         "requested_top_k",
         "available_rankings",
         "selected_count",
@@ -326,7 +333,55 @@ def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnosti
     ]
     assert frame.loc[0, "benchmark_name"] == "sample_sector_benchmark"
     assert frame.loc[0, "cash_weight"] == 0.5
+    assert frame.loc[0, "next_rebalance_as_of"] is None
     assert frame.loc[0, "benchmark_relative_gap_bps"] == 95.0
+
+
+def test_validation_report_summary_to_frame_exposes_assumptions_and_periodization() -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    RankingResult(
+                        ticker="AAA",
+                        as_of=date(2026, 1, 31),
+                        profile_name="balanced",
+                        weighted_score=90.0,
+                        total_penalty=0.0,
+                        final_score=90.0,
+                        pillar_scores={"RP": 90.0},
+                    )
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            )
+        ],
+        top_k=2,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+
+    frame = validation_report_summary_to_frame(report)
+
+    assert frame.columns.tolist() == [
+        "benchmark_name",
+        "top_k",
+        "transaction_cost_bps",
+        "period_count",
+        "periods_with_underfill",
+        "max_cash_weight",
+        "min_holding_period_days",
+        "max_holding_period_days",
+        "average_turnover",
+        "cumulative_portfolio_net_return",
+        "cumulative_benchmark_return",
+        "cumulative_excess_return",
+        "assumptions",
+        "limitations",
+    ]
+    assert frame.loc[0, "period_count"] == 1
+    assert "unallocated_cash_when_fewer_than_top_k_rankings" in frame.loc[0, "assumptions"]
 
 
 def test_write_validation_report_periods_csv(tmp_path: Path) -> None:
@@ -355,5 +410,35 @@ def test_write_validation_report_periods_csv(tmp_path: Path) -> None:
     )
 
     path = write_validation_report_periods_csv(report, tmp_path / "validation-periods.csv")
+
+    assert path.exists()
+
+
+def test_write_validation_report_summary_csv(tmp_path: Path) -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    RankingResult(
+                        ticker="AAA",
+                        as_of=date(2026, 1, 31),
+                        profile_name="balanced",
+                        weighted_score=90.0,
+                        total_penalty=0.0,
+                        final_score=90.0,
+                        pillar_scores={"RP": 90.0},
+                    )
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            )
+        ],
+        top_k=2,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+
+    path = write_validation_report_summary_csv(report, tmp_path / "validation-summary.csv")
 
     assert path.exists()

@@ -38,6 +38,7 @@ This repository provides an opinionated foundation for a sector-relative stock s
    - RP preview ranking exports
    - Composite ranking exports
    - Explainability card exports
+   - Validation report exports
    - Human-readable reports
 8. **Validation layer**
    - Unit tests

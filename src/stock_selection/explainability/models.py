@@ -27,6 +27,7 @@ class ExplanationCard(BaseModel):
     meets_minimum_pillars: bool
     missing_pillar_count: int = Field(ge=0)
     penalty_count: int = Field(ge=0)
+    score_gap_to_top_rank: float = Field(ge=0)
     score_gap_to_next_rank: float | None = None
     final_score: float
     weighted_score: float

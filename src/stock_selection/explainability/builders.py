@@ -13,6 +13,7 @@ def build_explanation_cards(
     top_risks: int = 2,
 ) -> list[ExplanationCard]:
     assembly_by_ticker = {assembly.ticker: assembly for assembly in assemblies}
+    top_rank_score = rankings[0].final_score if rankings else 0.0
     cards: list[ExplanationCard] = []
     for rank_position, ranking in enumerate(rankings, start=1):
         assembly = assembly_by_ticker.get(ranking.ticker)
@@ -70,6 +71,7 @@ def build_explanation_cards(
                 meets_minimum_pillars=assembly.meets_minimum_pillars,
                 missing_pillar_count=len(assembly.missing_pillars),
                 penalty_count=len(ranking.penalty_traces),
+                score_gap_to_top_rank=top_rank_score - ranking.final_score,
                 score_gap_to_next_rank=score_gap_to_next_rank,
                 final_score=ranking.final_score,
                 weighted_score=ranking.weighted_score,

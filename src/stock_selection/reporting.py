@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from stock_selection.backtest.benchmarks import BenchmarkFixture
 from stock_selection.backtest.validation import ValidationReport
 from stock_selection.explainability import ExplanationCard, ExplanationPillarDetail
 from stock_selection.models import PillarScoreCard, RankingResult
@@ -56,6 +57,7 @@ EXPLANATION_CARD_BASE_COLUMNS = [
     "meets_minimum_pillars",
     "missing_pillar_count",
     "penalty_count",
+    "score_gap_to_top_rank",
     "score_gap_to_next_rank",
     "final_score",
     "weighted_score",
@@ -70,12 +72,17 @@ EXPLANATION_CARD_BASE_COLUMNS = [
 VALIDATION_SUMMARY_BASE_COLUMNS = [
     "benchmark_name",
     "benchmark_type",
+    "benchmark_fixture_family",
     "benchmark_methodology",
     "benchmark_return_alignment",
     "top_k",
     "transaction_cost_bps",
+    "period_start_as_of",
+    "period_end_as_of",
     "period_count",
     "periods_with_underfill",
+    "benchmark_outperforming_periods",
+    "benchmark_underperforming_periods",
     "max_cash_weight",
     "min_holding_period_days",
     "max_holding_period_days",
@@ -89,6 +96,7 @@ VALIDATION_SUMMARY_BASE_COLUMNS = [
 VALIDATION_PERIOD_BASE_COLUMNS = [
     "benchmark_name",
     "benchmark_type",
+    "benchmark_fixture_family",
     "benchmark_methodology",
     "benchmark_return_alignment",
     "top_k",
@@ -116,6 +124,32 @@ VALIDATION_PERIOD_BASE_COLUMNS = [
     "benchmark_return",
     "excess_return",
     "benchmark_relative_gap_bps",
+    "cumulative_portfolio_net_return",
+    "cumulative_benchmark_return",
+    "cumulative_excess_return",
+]
+BENCHMARK_FIXTURE_BASE_COLUMNS = [
+    "family",
+    "benchmark_type",
+    "benchmark_name",
+    "methodology",
+    "description",
+    "returns_by_as_of",
+]
+ANALYSIS_BUNDLE_MANIFEST_BASE_COLUMNS = [
+    "as_of",
+    "benchmark_name",
+    "benchmark_type",
+    "benchmark_fixture_family",
+    "benchmark_methodology",
+    "benchmark_return_alignment",
+    "top_rank_ticker",
+    "top_rank_score",
+    "ranking_path",
+    "explanation_path",
+    "validation_summary_path",
+    "validation_periods_path",
+    "benchmark_fixtures_path",
 ]
 
 
@@ -238,6 +272,7 @@ def explanation_cards_to_frame(cards: list[ExplanationCard]) -> pd.DataFrame:
             "meets_minimum_pillars": card.meets_minimum_pillars,
             "missing_pillar_count": card.missing_pillar_count,
             "penalty_count": card.penalty_count,
+            "score_gap_to_top_rank": card.score_gap_to_top_rank,
             "score_gap_to_next_rank": card.score_gap_to_next_rank,
             "final_score": card.final_score,
             "weighted_score": card.weighted_score,
@@ -265,12 +300,17 @@ def validation_report_summary_to_frame(report: ValidationReport) -> pd.DataFrame
         {
             "benchmark_name": report.benchmark_name,
             "benchmark_type": report.benchmark_type,
+            "benchmark_fixture_family": report.benchmark_fixture_family,
             "benchmark_methodology": report.benchmark_methodology,
             "benchmark_return_alignment": report.benchmark_return_alignment,
             "top_k": report.top_k,
             "transaction_cost_bps": report.transaction_cost_bps,
+            "period_start_as_of": report.period_start_as_of.isoformat(),
+            "period_end_as_of": report.period_end_as_of.isoformat(),
             "period_count": len(report.periods),
             "periods_with_underfill": report.periods_with_underfill,
+            "benchmark_outperforming_periods": report.benchmark_outperforming_periods,
+            "benchmark_underperforming_periods": report.benchmark_underperforming_periods,
             "max_cash_weight": report.max_cash_weight,
             "min_holding_period_days": report.min_holding_period_days,
             "max_holding_period_days": report.max_holding_period_days,
@@ -292,6 +332,7 @@ def validation_report_periods_to_frame(report: ValidationReport) -> pd.DataFrame
             {
                 "benchmark_name": report.benchmark_name,
                 "benchmark_type": report.benchmark_type,
+                "benchmark_fixture_family": report.benchmark_fixture_family,
                 "benchmark_methodology": report.benchmark_methodology,
                 "benchmark_return_alignment": report.benchmark_return_alignment,
                 "top_k": report.top_k,
@@ -323,9 +364,62 @@ def validation_report_periods_to_frame(report: ValidationReport) -> pd.DataFrame
                 "benchmark_return": period.benchmark_return,
                 "excess_return": period.excess_return,
                 "benchmark_relative_gap_bps": period.benchmark_relative_gap_bps,
+                "cumulative_portfolio_net_return": period.cumulative_portfolio_net_return,
+                "cumulative_benchmark_return": period.cumulative_benchmark_return,
+                "cumulative_excess_return": period.cumulative_excess_return,
             }
         )
     return pd.DataFrame(rows, columns=VALIDATION_PERIOD_BASE_COLUMNS)
+
+
+def benchmark_fixtures_to_frame(fixtures: list[BenchmarkFixture]) -> pd.DataFrame:
+    rows = [
+        {
+            "family": fixture.family,
+            "benchmark_type": fixture.benchmark_type,
+            "benchmark_name": fixture.benchmark_name,
+            "methodology": fixture.methodology,
+            "description": fixture.description,
+            "returns_by_as_of": "|".join(
+                f"{as_of.isoformat()}={value}"
+                for as_of, value in sorted(fixture.returns_by_as_of.items())
+            ),
+        }
+        for fixture in fixtures
+    ]
+    return pd.DataFrame(rows, columns=BENCHMARK_FIXTURE_BASE_COLUMNS)
+
+
+def analysis_bundle_manifest_to_frame(
+    *,
+    as_of: str,
+    report: ValidationReport,
+    top_rank_ticker: str | None,
+    top_rank_score: float | None,
+    ranking_path: str | Path,
+    explanation_path: str | Path,
+    validation_summary_path: str | Path,
+    validation_periods_path: str | Path,
+    benchmark_fixtures_path: str | Path,
+) -> pd.DataFrame:
+    rows = [
+        {
+            "as_of": as_of,
+            "benchmark_name": report.benchmark_name,
+            "benchmark_type": report.benchmark_type,
+            "benchmark_fixture_family": report.benchmark_fixture_family,
+            "benchmark_methodology": report.benchmark_methodology,
+            "benchmark_return_alignment": report.benchmark_return_alignment,
+            "top_rank_ticker": top_rank_ticker,
+            "top_rank_score": top_rank_score,
+            "ranking_path": str(ranking_path),
+            "explanation_path": str(explanation_path),
+            "validation_summary_path": str(validation_summary_path),
+            "validation_periods_path": str(validation_periods_path),
+            "benchmark_fixtures_path": str(benchmark_fixtures_path),
+        }
+    ]
+    return pd.DataFrame(rows, columns=ANALYSIS_BUNDLE_MANIFEST_BASE_COLUMNS)
 
 
 def write_ranking_csv(results: list[RankingResult], path: str | Path) -> Path:
@@ -404,6 +498,45 @@ def write_validation_report_bundle_csvs(
         prefix.parent / f"{prefix.name}-periods.csv",
     )
     return summary_path, periods_path
+
+
+def write_benchmark_fixtures_csv(
+    fixtures: list[BenchmarkFixture],
+    path: str | Path,
+) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    benchmark_fixtures_to_frame(fixtures).to_csv(output, index=False)
+    return output
+
+
+def write_analysis_bundle_manifest_csv(
+    *,
+    as_of: str,
+    report: ValidationReport,
+    top_rank_ticker: str | None,
+    top_rank_score: float | None,
+    ranking_path: str | Path,
+    explanation_path: str | Path,
+    validation_summary_path: str | Path,
+    validation_periods_path: str | Path,
+    benchmark_fixtures_path: str | Path,
+    path: str | Path,
+) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    analysis_bundle_manifest_to_frame(
+        as_of=as_of,
+        report=report,
+        top_rank_ticker=top_rank_ticker,
+        top_rank_score=top_rank_score,
+        ranking_path=ranking_path,
+        explanation_path=explanation_path,
+        validation_summary_path=validation_summary_path,
+        validation_periods_path=validation_periods_path,
+        benchmark_fixtures_path=benchmark_fixtures_path,
+    ).to_csv(output, index=False)
+    return output
 
 
 def _prefixed_union_columns(

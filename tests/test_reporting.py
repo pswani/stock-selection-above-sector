@@ -1,6 +1,10 @@
 from datetime import date
 from pathlib import Path
 
+from stock_selection.backtest.benchmarks import (
+    BenchmarkFixtureFamily,
+    list_benchmark_fixtures,
+)
 from stock_selection.backtest.validation import (
     BenchmarkType,
     ValidationPeriodInput,
@@ -9,6 +13,8 @@ from stock_selection.backtest.validation import (
 from stock_selection.explainability import ExplanationCard, ExplanationPillarDetail
 from stock_selection.models import PillarScoreCard, RankingResult
 from stock_selection.reporting import (
+    analysis_bundle_manifest_to_frame,
+    benchmark_fixtures_to_frame,
     explanation_cards_to_frame,
     pillar_score_assemblies_to_frame,
     pillar_score_cards_to_frame,
@@ -16,6 +22,8 @@ from stock_selection.reporting import (
     relative_performance_preview_ranks_to_frame,
     validation_report_periods_to_frame,
     validation_report_summary_to_frame,
+    write_analysis_bundle_manifest_csv,
+    write_benchmark_fixtures_csv,
     write_explanation_cards_csv,
     write_pillar_score_assemblies_csv,
     write_pillar_score_cards_csv,
@@ -233,6 +241,7 @@ def test_explanation_cards_to_frame_has_richer_columns() -> None:
         meets_minimum_pillars=True,
         missing_pillar_count=0,
         penalty_count=1,
+        score_gap_to_top_rank=0.0,
         score_gap_to_next_rank=2.5,
         final_score=88.0,
         weighted_score=90.0,
@@ -262,6 +271,7 @@ def test_explanation_cards_to_frame_has_richer_columns() -> None:
     assert frame.loc[0, "rank_position"] == 1
     assert frame.loc[0, "available_pillar_count"] == 6
     assert frame.loc[0, "penalty_count"] == 1
+    assert frame.loc[0, "score_gap_to_top_rank"] == 0.0
     assert frame.loc[0, "score_gap_to_next_rank"] == 2.5
     assert frame.loc[0, "penalty_rules"] == "minimum_quality"
     assert frame.loc[0, "top_pillars_1_pillar"] == "G"
@@ -280,6 +290,7 @@ def test_write_explanation_cards_csv(tmp_path: Path) -> None:
         meets_minimum_pillars=True,
         missing_pillar_count=0,
         penalty_count=1,
+        score_gap_to_top_rank=0.0,
         score_gap_to_next_rank=2.5,
         final_score=88.0,
         weighted_score=90.0,
@@ -323,6 +334,7 @@ def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnosti
         transaction_cost_bps=10.0,
         benchmark_name="sample_sector_benchmark",
         benchmark_type=BenchmarkType.SECTOR_PEER_AVERAGE,
+        benchmark_fixture_family=BenchmarkFixtureFamily.SECTOR_PEER_AVERAGE,
         benchmark_methodology="sample_sector_average_total_return",
     )
 
@@ -331,6 +343,7 @@ def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnosti
     assert frame.columns.tolist() == [
         "benchmark_name",
         "benchmark_type",
+        "benchmark_fixture_family",
         "benchmark_methodology",
         "benchmark_return_alignment",
         "top_k",
@@ -358,9 +371,13 @@ def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnosti
         "benchmark_return",
         "excess_return",
         "benchmark_relative_gap_bps",
+        "cumulative_portfolio_net_return",
+        "cumulative_benchmark_return",
+        "cumulative_excess_return",
     ]
     assert frame.loc[0, "benchmark_name"] == "sample_sector_benchmark"
     assert frame.loc[0, "benchmark_type"] == BenchmarkType.SECTOR_PEER_AVERAGE
+    assert frame.loc[0, "benchmark_fixture_family"] == BenchmarkFixtureFamily.SECTOR_PEER_AVERAGE
     assert frame.loc[0, "cash_weight"] == 0.5
     assert frame.loc[0, "next_rebalance_as_of"] is None
     assert bool(frame.loc[0, "underfilled"]) is True
@@ -391,6 +408,7 @@ def test_validation_report_summary_to_frame_exposes_assumptions_and_periodizatio
         transaction_cost_bps=10.0,
         benchmark_name="sample_sector_benchmark",
         benchmark_type=BenchmarkType.SECTOR_ETF,
+        benchmark_fixture_family=BenchmarkFixtureFamily.SECTOR_ETF,
         benchmark_methodology="sample_sector_etf_total_return",
     )
 
@@ -399,12 +417,17 @@ def test_validation_report_summary_to_frame_exposes_assumptions_and_periodizatio
     assert frame.columns.tolist() == [
         "benchmark_name",
         "benchmark_type",
+        "benchmark_fixture_family",
         "benchmark_methodology",
         "benchmark_return_alignment",
         "top_k",
         "transaction_cost_bps",
+        "period_start_as_of",
+        "period_end_as_of",
         "period_count",
         "periods_with_underfill",
+        "benchmark_outperforming_periods",
+        "benchmark_underperforming_periods",
         "max_cash_weight",
         "min_holding_period_days",
         "max_holding_period_days",
@@ -417,6 +440,7 @@ def test_validation_report_summary_to_frame_exposes_assumptions_and_periodizatio
     ]
     assert frame.loc[0, "period_count"] == 1
     assert frame.loc[0, "benchmark_type"] == BenchmarkType.SECTOR_ETF
+    assert frame.loc[0, "benchmark_fixture_family"] == BenchmarkFixtureFamily.SECTOR_ETF
     assert frame.loc[0, "benchmark_methodology"] == "sample_sector_etf_total_return"
     assert "unallocated_cash_when_fewer_than_top_k_rankings" in frame.loc[0, "assumptions"]
 
@@ -513,3 +537,120 @@ def test_write_validation_report_bundle_csvs(tmp_path: Path) -> None:
 
     assert summary_path.exists()
     assert periods_path.exists()
+
+
+def test_benchmark_fixtures_to_frame_has_deterministic_catalog_columns() -> None:
+    frame = benchmark_fixtures_to_frame(list_benchmark_fixtures())
+
+    assert frame.columns.tolist() == [
+        "family",
+        "benchmark_type",
+        "benchmark_name",
+        "methodology",
+        "description",
+        "returns_by_as_of",
+    ]
+    assert frame.loc[0, "family"] == BenchmarkFixtureFamily.MARKET_INDEX
+
+
+def test_analysis_bundle_manifest_to_frame_exposes_paths_and_benchmark_context() -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    RankingResult(
+                        ticker="AAA",
+                        as_of=date(2026, 1, 31),
+                        profile_name="balanced",
+                        weighted_score=90.0,
+                        total_penalty=0.0,
+                        final_score=90.0,
+                        pillar_scores={"RP": 90.0},
+                    )
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            )
+        ],
+        top_k=1,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+        benchmark_fixture_family=BenchmarkFixtureFamily.SECTOR_PEER_AVERAGE,
+    )
+
+    frame = analysis_bundle_manifest_to_frame(
+        as_of="2026-01-31",
+        report=report,
+        top_rank_ticker="AAA",
+        top_rank_score=90.0,
+        ranking_path="rank.csv",
+        explanation_path="explain.csv",
+        validation_summary_path="summary.csv",
+        validation_periods_path="periods.csv",
+        benchmark_fixtures_path="fixtures.csv",
+    )
+
+    assert frame.columns.tolist() == [
+        "as_of",
+        "benchmark_name",
+        "benchmark_type",
+        "benchmark_fixture_family",
+        "benchmark_methodology",
+        "benchmark_return_alignment",
+        "top_rank_ticker",
+        "top_rank_score",
+        "ranking_path",
+        "explanation_path",
+        "validation_summary_path",
+        "validation_periods_path",
+        "benchmark_fixtures_path",
+    ]
+    assert frame.loc[0, "top_rank_ticker"] == "AAA"
+
+
+def test_write_benchmark_fixtures_and_manifest_csvs(tmp_path: Path) -> None:
+    fixtures_path = write_benchmark_fixtures_csv(
+        list_benchmark_fixtures(),
+        tmp_path / "benchmark-fixtures.csv",
+    )
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    RankingResult(
+                        ticker="AAA",
+                        as_of=date(2026, 1, 31),
+                        profile_name="balanced",
+                        weighted_score=90.0,
+                        total_penalty=0.0,
+                        final_score=90.0,
+                        pillar_scores={"RP": 90.0},
+                    )
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            )
+        ],
+        top_k=1,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+        benchmark_fixture_family=BenchmarkFixtureFamily.SECTOR_PEER_AVERAGE,
+    )
+
+    manifest_path = write_analysis_bundle_manifest_csv(
+        as_of="2026-01-31",
+        report=report,
+        top_rank_ticker="AAA",
+        top_rank_score=90.0,
+        ranking_path="rank.csv",
+        explanation_path="explain.csv",
+        validation_summary_path="summary.csv",
+        validation_periods_path="periods.csv",
+        benchmark_fixtures_path=fixtures_path,
+        path=tmp_path / "analysis-manifest.csv",
+    )
+
+    assert fixtures_path.exists()
+    assert manifest_path.exists()

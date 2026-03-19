@@ -141,6 +141,7 @@ Milestones:
     - Progress: the harness now also validates unique period dates, ranking-result `as_of` alignment, and non-blank benchmark names, and the reporting layer can export deterministic validation-period diagnostics including benchmark-relative gap in bps.
     - Progress: the harness now also exposes next rebalance anchors and inferred holding-period days, and reporting/CLI surfaces can export validation summaries plus validation periods from the implemented pipeline-backed sample path.
     - Progress: benchmark metadata is now a first-class validation contract, period inputs must arrive in explicit increasing order rather than relying on implicit sorting, and validation outputs now include period index, fill ratio, and underfilled diagnostics for easier interpretation.
+    - Progress: deterministic benchmark-family fixtures now support the sample validation flows, and validation outputs now expose period start/end anchors, benchmark outperformance counts, and cumulative benchmark-relative progression for easier end-to-end interpretation.
     - Dependencies: Milestones 1-8.
 
 10. **Milestone 10 — CLI/reporting/export workflow hardening**
@@ -149,6 +150,7 @@ Milestones:
     - Tests: CLI smoke tests + export contract tests.
     - Progress: CLI now includes pipeline-backed sample exports for explanation cards and validation reports in addition to the existing RP exports and explicit demo-only ranking command.
     - Progress: CLI now also includes a pipeline-backed analysis bundle export, and explanation/reporting outputs expose richer ranking coverage and benchmark metadata details without changing the established semantics of existing commands.
+    - Progress: CLI now also includes a pipeline-backed benchmark-fixture export and a richer analysis-bundle manifest so the benchmark/reporting assumptions behind sample flows are inspectable outside the terminal.
     - Dependencies: Milestones 1-9.
 
 Validation per milestone:

@@ -77,18 +77,26 @@ class ValidationPeriodResult(BaseModel):
     benchmark_return: float
     excess_return: float
     benchmark_relative_gap_bps: float
+    cumulative_portfolio_net_return: float
+    cumulative_benchmark_return: float
+    cumulative_excess_return: float
 
 
 class ValidationReport(BaseModel):
     benchmark_name: str
     benchmark_type: BenchmarkType = BenchmarkType.CUSTOM
+    benchmark_fixture_family: str | None = None
     benchmark_methodology: str
     benchmark_return_alignment: BenchmarkReturnAlignment = (
         BenchmarkReturnAlignment.FORWARD_PERIOD_TOTAL_RETURN
     )
     top_k: int = Field(ge=1)
     transaction_cost_bps: float = Field(ge=0)
+    period_start_as_of: date
+    period_end_as_of: date
     periods_with_underfill: int = Field(ge=0)
+    benchmark_outperforming_periods: int = Field(ge=0)
+    benchmark_underperforming_periods: int = Field(ge=0)
     max_cash_weight: float = Field(ge=0, le=1)
     min_holding_period_days: int | None = Field(default=None, ge=1)
     max_holding_period_days: int | None = Field(default=None, ge=1)
@@ -116,6 +124,7 @@ def run_validation_backtest(
     transaction_cost_bps: float,
     benchmark_name: str,
     benchmark_type: BenchmarkType = BenchmarkType.CUSTOM,
+    benchmark_fixture_family: str | None = None,
     benchmark_methodology: str | None = None,
 ) -> ValidationReport:
     if top_k < 1:
@@ -201,6 +210,15 @@ def run_validation_backtest(
                 benchmark_return=period_input.benchmark_return,
                 excess_return=excess_return,
                 benchmark_relative_gap_bps=benchmark_relative_gap_bps,
+                cumulative_portfolio_net_return=(cumulative_portfolio * (1.0 + net_return)) - 1.0,
+                cumulative_benchmark_return=(
+                    cumulative_benchmark * (1.0 + period_input.benchmark_return)
+                )
+                - 1.0,
+                cumulative_excess_return=(
+                    (cumulative_portfolio * (1.0 + net_return)) - 1.0
+                )
+                - ((cumulative_benchmark * (1.0 + period_input.benchmark_return)) - 1.0),
             )
         )
 
@@ -210,6 +228,8 @@ def run_validation_backtest(
 
     average_turnover = sum(period.turnover for period in periods) / len(periods)
     periods_with_underfill = sum(1 for period in periods if period.cash_weight > 0)
+    benchmark_outperforming_periods = sum(1 for period in periods if period.excess_return > 0)
+    benchmark_underperforming_periods = sum(1 for period in periods if period.excess_return < 0)
     max_cash_weight = max(period.cash_weight for period in periods)
     holding_period_values = [
         period.holding_period_days
@@ -223,11 +243,16 @@ def run_validation_backtest(
     return ValidationReport(
         benchmark_name=benchmark_spec.name,
         benchmark_type=benchmark_spec.benchmark_type,
+        benchmark_fixture_family=benchmark_fixture_family,
         benchmark_methodology=benchmark_spec.methodology,
         benchmark_return_alignment=benchmark_spec.return_alignment,
         top_k=top_k,
         transaction_cost_bps=transaction_cost_bps,
+        period_start_as_of=periods[0].as_of,
+        period_end_as_of=periods[-1].as_of,
         periods_with_underfill=periods_with_underfill,
+        benchmark_outperforming_periods=benchmark_outperforming_periods,
+        benchmark_underperforming_periods=benchmark_underperforming_periods,
         max_cash_weight=max_cash_weight,
         min_holding_period_days=min(holding_period_values, default=None),
         max_holding_period_days=max(holding_period_values, default=None),
@@ -244,6 +269,11 @@ def run_validation_backtest(
             (
                 "benchmark_methodology_supplied_explicitly:"
                 f"{benchmark_spec.benchmark_type}:{benchmark_spec.methodology}"
+            ),
+            *(
+                [f"benchmark_fixture_family_supplied:{benchmark_fixture_family}"]
+                if benchmark_fixture_family is not None
+                else []
             ),
             "next_rebalance_as_of_used_as_period_end_when_subsequent_period_exists",
             "unallocated_cash_when_fewer_than_top_k_rankings",

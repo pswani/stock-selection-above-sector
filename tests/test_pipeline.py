@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from stock_selection.backtest import BenchmarkFixtureFamily
 from stock_selection.backtest.validation import (
     BenchmarkType,
     ValidationPeriodInput,
@@ -124,6 +125,7 @@ def test_build_explanation_cards_derives_strengths_and_risks_from_rankings() -> 
     assert cards[0].meets_minimum_pillars is True
     assert cards[0].missing_pillar_count == 0
     assert cards[0].penalty_count == 0
+    assert cards[0].score_gap_to_top_rank == pytest.approx(0.0)
     assert cards[0].score_gap_to_next_rank is not None
     assert cards[0].strengths
     assert cards[0].top_pillars
@@ -216,12 +218,16 @@ def test_run_validation_backtest_models_turnover_costs_and_benchmark() -> None:
         transaction_cost_bps=10.0,
         benchmark_name="sample_sector_benchmark",
         benchmark_type=BenchmarkType.SECTOR_ETF,
+        benchmark_fixture_family=BenchmarkFixtureFamily.SECTOR_ETF,
         benchmark_methodology="sample_sector_etf_total_return",
     )
 
     assert report.benchmark_name == "sample_sector_benchmark"
     assert report.benchmark_type == BenchmarkType.SECTOR_ETF
+    assert report.benchmark_fixture_family == BenchmarkFixtureFamily.SECTOR_ETF
     assert report.benchmark_methodology == "sample_sector_etf_total_return"
+    assert report.period_start_as_of == date(2026, 1, 31)
+    assert report.period_end_as_of == date(2026, 2, 28)
     assert len(report.periods) == 2
     assert report.periods[0].period_index == 1
     assert report.periods[0].turnover == pytest.approx(1.0)
@@ -235,6 +241,9 @@ def test_run_validation_backtest_models_turnover_costs_and_benchmark() -> None:
     assert report.periods[0].holding_period_days == 28
     assert report.periods[0].benchmark_relative_gap_bps == pytest.approx(
         report.periods[0].excess_return * 10_000.0
+    )
+    assert report.periods[0].cumulative_portfolio_net_return == pytest.approx(
+        report.periods[0].portfolio_net_return
     )
     assert report.average_turnover >= 0
     assert report.cumulative_excess_return == pytest.approx(
@@ -293,6 +302,8 @@ def test_run_validation_backtest_preserves_cash_when_fewer_than_top_k_rankings()
     assert report.min_holding_period_days == 28
     assert report.max_holding_period_days == 28
     assert report.benchmark_name == "sample_sector_benchmark"
+    assert report.benchmark_outperforming_periods == 2
+    assert report.benchmark_underperforming_periods == 0
     assert "unallocated_cash_when_fewer_than_top_k_rankings" in report.assumptions
     assert any(
         assumption.startswith("benchmark_return_assumed_forward_aligned_to_same_period:")
@@ -307,6 +318,31 @@ def test_run_validation_backtest_preserves_cash_when_fewer_than_top_k_rankings()
         in report.limitations
     )
     assert "cash_earns_zero_return_when_portfolio_is_underfilled" in report.limitations
+
+
+def test_run_validation_backtest_tracks_benchmark_underperformance_counts() -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[_ranking_result("AAA", date(2026, 1, 31), final_score=90.0)],
+                realized_returns={"AAA": 0.0},
+                benchmark_return=0.01,
+            ),
+            ValidationPeriodInput(
+                as_of=date(2026, 2, 28),
+                ranking_results=[_ranking_result("AAA", date(2026, 2, 28), final_score=90.0)],
+                realized_returns={"AAA": 0.03},
+                benchmark_return=0.01,
+            ),
+        ],
+        top_k=1,
+        transaction_cost_bps=0.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+
+    assert report.benchmark_outperforming_periods == 1
+    assert report.benchmark_underperforming_periods == 1
 
 
 def test_run_validation_backtest_rejects_period_alignment_mismatch() -> None:

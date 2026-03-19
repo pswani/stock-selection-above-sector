@@ -44,6 +44,12 @@
   - validation outputs now expose `period_index`, `selection_fill_ratio`, and `underfilled` diagnostics in both Python/reporting surfaces
   - explanation cards now expose pillar-count coverage, minimum-pillar status, penalty count, and score gap to the next rank
   - CLI/reporting now support a pipeline-backed analysis bundle export that writes ranking, explanation, and validation outputs together
+- Completed the next benchmark-fixture and bundle-reporting batch:
+  - deterministic benchmark-family fixtures now back the sample validation flows instead of relying on only ad hoc benchmark metadata strings
+  - validation summaries and periods now expose fixture-family context, period start/end anchors, benchmark outperformance counts, and cumulative benchmark-relative progression
+  - explanation cards now also expose score gap to the top rank
+  - reporting now exports benchmark fixture catalogs and analysis-bundle manifests
+  - CLI now supports pipeline-backed sample benchmark-fixture export and writes fixture/manifest artifacts into the analysis bundle
 
 ## Current status
 - `AUDIT-003` is complete in changed scope: the repo now has deterministic end-to-end paths for all six pillars and a real composite ranking pipeline.
@@ -53,19 +59,21 @@
 - The audit backlog is now fully complete.
 - The validation harness is now more realistic for partial-coverage periods because it preserves underfilled cash exposure explicitly instead of assuming full reinvestment.
 - Validation/reporting semantics are now tighter and more inspectable: date alignment, benchmark labeling, underfill diagnostics, and explanation details are explicit in the Python/reporting surfaces.
-- Pipeline-backed explanation, validation, and bundled analysis exports now exist at the CLI layer for the implemented sample paths, while demo-only versus preview-only semantics remain explicit.
+- Pipeline-backed explanation, validation, benchmark-fixture, and bundled analysis exports now exist at the CLI layer for the implemented sample paths, while demo-only versus preview-only semantics remain explicit.
 - `uv run pytest -q` passed in this session.
 - `uv run pyright` passed in this session.
 - `uv run ruff check .` passed in this session.
 
 ## Next task
-- Recommended next task: continue the milestone by deciding whether to deepen benchmark methodology toward point-in-time benchmark sourcing and benchmark-family fixtures, or to expand execution/slippage realism beyond the current deterministic turnover-cost model.
+- Recommended next task: continue the milestone by deciding whether to deepen benchmark methodology toward point-in-time benchmark sourcing and broader benchmark-family fixtures, or to expand execution/slippage realism beyond the current deterministic turnover-cost model.
 
 ## Known blockers
 - None for the audit backlog.
 
 ## Changed files
 - `src/stock_selection/cli/main.py`
+- `src/stock_selection/backtest/benchmarks.py`
+- `src/stock_selection/backtest/__init__.py`
 - `src/stock_selection/explainability/models.py`
 - `src/stock_selection/explainability/builders.py`
 - `src/stock_selection/explainability/__init__.py`
@@ -83,8 +91,8 @@
 
 ## Validation run
 - `uv run pytest -q tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed)
-- `uv run ruff check src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed)
-- `uv run pyright src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed: `0 errors`)
+- `uv run ruff check src/stock_selection/backtest/__init__.py src/stock_selection/backtest/benchmarks.py src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed)
+- `uv run pyright src/stock_selection/backtest/__init__.py src/stock_selection/backtest/benchmarks.py src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_pipeline.py tests/test_reporting.py tests/test_cli.py` (passed: `0 errors`)
 - `uv run pytest -q tests/test_pipeline.py tests/test_reporting.py` (passed)
 - `uv run ruff check src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py tests/test_pipeline.py tests/test_reporting.py` (passed)
 - `uv run pyright src/stock_selection/backtest/validation.py src/stock_selection/explainability/models.py src/stock_selection/explainability/builders.py src/stock_selection/explainability/__init__.py src/stock_selection/reporting.py tests/test_pipeline.py tests/test_reporting.py` (passed: `0 errors`)
@@ -104,10 +112,10 @@
   - clean repo-wide Ruff baseline after the final audit lint fix
   - more realistic partial-coverage validation behavior through explicit residual cash and buy/sell turnover reporting
   - richer deterministic explanation/reporting surfaces for validation periods and ranking explanations
-  - pipeline-backed CLI exports for explanation cards, validation reports, and bundled analysis outputs, plus explicit validation periodization and benchmark metadata
+  - pipeline-backed CLI exports for explanation cards, validation reports, benchmark fixtures, and bundled analysis outputs, plus explicit validation periodization and benchmark metadata
 - What remains:
   - deeper validation realism beyond the current harness
-  - point-in-time benchmark sourcing, benchmark-family fixture coverage, and richer execution/slippage modeling remain future work
+  - point-in-time benchmark sourcing, broader benchmark-family fixture coverage, and richer execution/slippage modeling remain future work
 
 ## Exact next prompt
 Read:
@@ -122,8 +130,8 @@ Read:
 - docs/code_review.md
 
 Then:
-1. continue the larger validation-and-explainability milestone after the benchmark-metadata and analysis-bundle enhancement
-2. keep the work scoped to benchmark methodology, benchmark-family fixtures, periodization, and validation/reporting semantics rather than changing scoring formulas or existing CLI command semantics
+1. continue the larger validation-and-explainability milestone after the benchmark-fixture and analysis-bundle manifest enhancement
+2. keep the work scoped to point-in-time benchmark methodology, broader benchmark-family fixtures, periodization, and validation/reporting semantics rather than changing scoring formulas or existing CLI command semantics
 3. preserve the explicit preview-versus-final CLI/export semantics established for `AUDIT-002`
 4. preserve the deterministic ranking, missing-data, explainability, and validation layers established by `AUDIT-003` through `AUDIT-006`
 5. add/update focused tests only for the changed validation, explainability, and reporting paths

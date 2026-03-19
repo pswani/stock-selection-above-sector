@@ -69,6 +69,8 @@ def test_export_sample_validation_report(tmp_path: Path) -> None:
             "export-sample-validation-report",
             "--output-prefix",
             str(prefix),
+            "--benchmark-family",
+            "sector_etf",
             "--benchmark-type",
             "sector_etf",
             "--benchmark-methodology",
@@ -81,6 +83,14 @@ def test_export_sample_validation_report(tmp_path: Path) -> None:
     assert "pipeline-backed validation export" in result.stdout
 
 
+def test_export_sample_benchmark_fixtures(tmp_path: Path) -> None:
+    out = tmp_path / "sample-benchmark-fixtures.csv"
+    result = runner.invoke(app, ["export-sample-benchmark-fixtures", "--output", str(out)])
+    assert result.exit_code == 0
+    assert out.exists()
+    assert "pipeline-backed benchmark fixture export" in result.stdout
+
+
 def test_export_sample_analysis_bundle(tmp_path: Path) -> None:
     output_dir = tmp_path / "analysis-bundle"
     result = runner.invoke(
@@ -89,6 +99,8 @@ def test_export_sample_analysis_bundle(tmp_path: Path) -> None:
             "export-sample-analysis-bundle",
             "--output-dir",
             str(output_dir),
+            "--benchmark-family",
+            "market_index",
             "--benchmark-type",
             "market_index",
         ],
@@ -98,4 +110,27 @@ def test_export_sample_analysis_bundle(tmp_path: Path) -> None:
     assert (output_dir / "sample-explanations.csv").exists()
     assert (output_dir / "sample-validation-summary.csv").exists()
     assert (output_dir / "sample-validation-periods.csv").exists()
+    assert (output_dir / "sample-benchmark-fixtures.csv").exists()
+    assert (output_dir / "sample-analysis-manifest.csv").exists()
     assert "pipeline-backed analysis bundle export" in result.stdout
+
+
+def test_export_sample_validation_report_rejects_fixture_type_mismatch(tmp_path: Path) -> None:
+    prefix = tmp_path / "sample-validation"
+    result = runner.invoke(
+        app,
+        [
+            "export-sample-validation-report",
+            "--output-prefix",
+            str(prefix),
+            "--benchmark-family",
+            "market_index",
+            "--benchmark-type",
+            "sector_etf",
+        ],
+    )
+    assert result.exit_code != 0
+    assert result.exception is not None
+    assert "benchmark_type must match the selected benchmark fixture family" in str(
+        result.exception
+    )

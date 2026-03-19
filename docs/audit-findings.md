@@ -3,7 +3,7 @@
 ## Summary
 - High: 0 open, 1 fixed
 - Medium: 0 open, 5 fixed
-- Low: 1
+- Low: 0 open, 1 fixed
 
 ## Issues
 
@@ -71,3 +71,4 @@
 - Recommended fix: Convert the remaining registry enums to `StrEnum` in a small, behavior-preserving lint batch.
 - Test expectation: Re-run `uv run ruff check .` and verify that the remaining baseline is clean.
 - Dependencies: None.
+- Status: Verified complete on 2026-03-18. `PillarName` and `MissingDataPolicy` now inherit from `StrEnum`, existing registry tests still pass, and `uv run ruff check .` now passes repo-wide.

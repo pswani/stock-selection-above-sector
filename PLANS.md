@@ -192,7 +192,7 @@ Findings:
    Status: fixed on 2026-03-18. Pillar scores now preserve missing normalized percentiles as `None`, and composite assemblies count only scored pillars toward availability and final-ranking eligibility.
 6. Severity `P3`: repo-wide Ruff `UP042` baseline findings continue to obscure changed-scope lint signal.
    Recommended fix: address the baseline in a dedicated lint batch when brought into scope.
-   Status: unchanged.
+   Status: fixed on 2026-03-18. `PillarName` and `MissingDataPolicy` now inherit from `StrEnum`, preserving behavior while restoring a clean repo-wide Ruff baseline.
 7. Severity `P2`: config validation was too permissive for the existing scoring contract, allowing invalid pillar-weight maps to survive until later scoring code.
    Recommended fix: validate required pillar coverage, non-negative weights, and positive total weight at config-load time with clearer errors.
    Status: fixed in this session.
@@ -350,5 +350,5 @@ Recommended first batch:
 4. Status: completed on 2026-03-17. Latest-only timing semantics are now explicit in the provider contract and FMP adapter, with focused regression tests.
 
 Recommended next batch:
-1. Fix `AUDIT-006` only.
-2. Keep the change scoped to the remaining Ruff `UP042` enum findings in `src/stock_selection/factors/registry.py`.
+1. Audit backlog complete on 2026-03-18.
+2. Next work should return to milestone-driven validation realism and explainability depth rather than further audit cleanup.

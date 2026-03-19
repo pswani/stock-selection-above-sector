@@ -58,3 +58,4 @@
 - The explainability layer now derives deterministic `ExplanationCard` outputs directly from ranking results and assemblies.
 - The validation layer now uses an explicit deterministic harness with top-k selection, turnover, transaction costs, benchmark returns, and documented assumptions rather than snapshot writing alone.
 - Composite assembly now counts only non-`None` pillar scores toward `available_pillar_count` and `min_required_pillars`, so final rankings exclude incompletely scored names while assembly/reporting outputs still retain their coverage and diagnostics.
+- The factor registry enums `PillarName` and `MissingDataPolicy` now inherit from `StrEnum`, which preserves behavior while restoring a clean repo-wide Ruff baseline.

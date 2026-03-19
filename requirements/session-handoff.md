@@ -24,39 +24,26 @@
   - pillar scores now keep missing normalized percentiles as `None`
   - composite assembly counts only scored pillars toward `available_pillar_count` and `min_required_pillars`
   - incomplete names remain explicit in assembly/preview exports instead of receiving artificial `0.0` scores in final rankings
+- Completed `AUDIT-006` by converting the remaining factor-registry enums to `StrEnum`, restoring a clean repo-wide Ruff baseline without changing registry behavior.
 
 ## Current status
 - `AUDIT-003` is complete in changed scope: the repo now has deterministic end-to-end paths for all six pillars and a real composite ranking pipeline.
 - `AUDIT-004` is complete in changed scope: explainability and validation/backtest layers now expose real deterministic behavior instead of placeholder scaffolds.
 - `AUDIT-005` is complete in changed scope: the ranking path now treats missing normalized pillar scores as missing coverage rather than zero-valued scores.
-- Remaining gaps are primarily:
-- `uv run ruff check .` still fails only on 2 pre-existing `UP042` findings in `src/stock_selection/factors/registry.py` (`AUDIT-006`)
+- `AUDIT-006` is complete in changed scope: the factor registry now uses `StrEnum` for the remaining enum definitions, and repo-wide Ruff passes again.
+- The audit backlog is now fully complete.
 - `uv run pytest -q` passed in this session.
 - `uv run pyright` passed in this session.
-- `uv run ruff check .` still fails only on 2 pre-existing `UP042` findings in `src/stock_selection/factors/registry.py` (`AUDIT-006`).
+- `uv run ruff check .` passed in this session.
 
 ## Next task
-- Recommended next task: address `AUDIT-006` only by cleaning the remaining repo-wide Ruff `UP042` findings in `src/stock_selection/factors/registry.py`.
+- Recommended next task: deepen validation realism beyond the current deterministic turnover/cost harness without changing the established CLI or ranking contracts.
 
 ## Known blockers
-- `uv run ruff check .` currently fails on 2 pre-existing `UP042` findings in:
-  - `src/stock_selection/factors/registry.py`
+- None for the audit backlog.
 
 ## Changed files
-- `src/stock_selection/models.py`
-- `src/stock_selection/scoring/composite.py`
-- `src/stock_selection/scoring/relative_performance.py`
-- `src/stock_selection/scoring/growth.py`
-- `src/stock_selection/scoring/quality.py`
-- `src/stock_selection/scoring/valuation.py`
-- `src/stock_selection/scoring/risk.py`
-- `src/stock_selection/scoring/sentiment.py`
-- `tests/test_relative_performance.py`
-- `tests/test_growth.py`
-- `tests/test_additional_pillars.py`
-- `tests/test_composite.py`
-- `tests/test_pipeline.py`
-- `docs/scoring-spec.md`
+- `src/stock_selection/factors/registry.py`
 - `docs/audit-findings.md`
 - `requirements/session-handoff.md`
 - `requirements/roadmap.md`
@@ -64,15 +51,10 @@
 - `PLANS.md`
 
 ## Validation run
-- `uv run pytest -q tests/test_relative_performance.py tests/test_growth.py tests/test_additional_pillars.py tests/test_composite.py tests/test_pipeline.py` (passed)
-- `uv run ruff check src/stock_selection/models.py src/stock_selection/scoring/composite.py src/stock_selection/scoring/relative_performance.py src/stock_selection/scoring/growth.py src/stock_selection/scoring/quality.py src/stock_selection/scoring/valuation.py src/stock_selection/scoring/risk.py src/stock_selection/scoring/sentiment.py tests/test_relative_performance.py tests/test_growth.py tests/test_additional_pillars.py tests/test_composite.py tests/test_pipeline.py` (passed)
-- `uv run pyright src/stock_selection/models.py src/stock_selection/scoring/composite.py src/stock_selection/scoring/relative_performance.py src/stock_selection/scoring/growth.py src/stock_selection/scoring/quality.py src/stock_selection/scoring/valuation.py src/stock_selection/scoring/risk.py src/stock_selection/scoring/sentiment.py tests/test_relative_performance.py tests/test_growth.py tests/test_additional_pillars.py tests/test_composite.py tests/test_pipeline.py` (passed: `0 errors`)
-- `uv run pytest -q tests/test_additional_pillars.py tests/test_pipeline.py tests/test_cli.py tests/test_reporting.py` (passed)
+- `uv run pytest -q tests/test_factors_registry.py` (passed)
 - `uv run pytest -q` (passed)
-- `uv run ruff check src/stock_selection/scoring src/stock_selection/explainability src/stock_selection/backtest src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_additional_pillars.py tests/test_pipeline.py tests/test_cli.py tests/test_reporting.py` (passed)
-- `uv run ruff check .` (failed only on 2 pre-existing `UP042` violations in `src/stock_selection/factors/registry.py`)
+- `uv run ruff check .` (passed)
 - `uv run pyright` (passed: `0 errors`)
-- `uv run pyright src/stock_selection/scoring src/stock_selection/explainability src/stock_selection/backtest src/stock_selection/reporting.py src/stock_selection/cli/main.py tests/test_additional_pillars.py tests/test_pipeline.py tests/test_cli.py tests/test_reporting.py` (passed: `0 errors`)
 
 ## Hardening status
 - Highest-value hardening changes implemented:
@@ -80,8 +62,10 @@
   - real explanation-card generation from ranking outputs
   - real validation harness with turnover, transaction costs, and benchmark-relative excess returns
   - coherent missing-data semantics for fully assembled rankings, with missing normalized percentiles no longer coerced to zero
+  - clean repo-wide Ruff baseline after the final audit lint fix
 - What remains:
-  - `AUDIT-006`
+  - deeper validation realism beyond the current harness
+  - richer explainability diagnostics when they become valuable
 
 ## Exact next prompt
 Read:
@@ -96,11 +80,11 @@ Read:
 - docs/code_review.md
 
 Then:
-1. implement only the next remediation batch: fix `AUDIT-006`
-2. keep the work scoped to the remaining Ruff `UP042` enum findings in `src/stock_selection/factors/registry.py`
+1. implement the next milestone after the completed audit backlog by deepening validation realism beyond the current deterministic turnover/cost harness
+2. keep the work scoped to validation assumptions and reporting rather than changing scoring formulas or CLI command semantics
 3. preserve the explicit preview-versus-final CLI/export semantics established for `AUDIT-002`
 4. preserve the deterministic ranking, missing-data, explainability, and validation layers established by `AUDIT-003` through `AUDIT-005`
-5. add/update focused tests only if the enum cleanup changes any observable contract
+5. add/update focused tests only for the changed validation path
 6. avoid unrelated refactors
 7. run targeted checks plus `uv run pytest -q`, `uv run ruff check .`, and `uv run pyright`
 8. fix defects found in the changed scope

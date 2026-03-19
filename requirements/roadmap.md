@@ -1,12 +1,11 @@
 # Roadmap
 
 ## Current phase
-Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, including the missing-data coverage policy for fully assembled rankings. The next review-driven work shifts to validation depth and the remaining lint baseline.
+Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, and the audit backlog is fully closed. The next review-driven work shifts to validation depth and explainability expansion.
 
 ## Immediate milestones
 1. Deepen validation realism beyond the current deterministic turnover/cost harness.
 2. Expand explainability beyond summary cards into richer ranking diagnostics when needed.
-3. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
 
 ## Cross-cutting readiness
 - The re-uploaded framework PDF is now stored at `requirements/framework-primary-source.pdf` and should be treated as the more specific requirements source when it can be inspected reliably.
@@ -14,7 +13,7 @@ Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, in
 - Environment scripts now check complete runtime/developer dependency availability before milestone work proceeds.
 - `validate-env.sh` is self-contained (uv check + frozen sync) for newly provisioned servers.
 - Local validation on 2026-03-16 confirmed the bootstrap/validation scripts run successfully; `uv run pytest -q` and `uv run pyright` pass locally.
-- Current readiness blocker is 2 pre-existing repo-wide Ruff UP042 findings in `src/stock_selection/factors/registry.py`; targeted Ruff for changed provider/universe files passes cleanly.
+- Repo-wide lint baseline is now clean: `uv run ruff check .` passes locally.
 - The latest review batch is complete: latest-only provider timing behavior is now explicit in the provider contract and FMP adapter.
 - Milestone 4 is complete: normalization now covers peer-group primitives plus typed normalized-factor outputs and deterministic DataFrame projections with focused tests.
 - Milestone 5 now has a narrow RP path from six-month return inputs to `PillarScoreCard` outputs with explicit diagnostics and coverage.
@@ -29,7 +28,7 @@ Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, in
 - Milestone 6 now covers all six pillars and a deterministic composite ranking path, with pipeline-backed sample exports for final ranking, explanation cards, and validation results.
 - The validation layer now includes a deterministic top-k harness with turnover, transaction costs, benchmark-relative excess returns, and explicit assumptions/limitations.
 - The explainability layer now includes deterministic explanation-card generation derived from ranking outputs.
-- The top open review-driven gaps are now deeper validation realism and the repo-wide Ruff baseline.
+- The top open review-driven gap is now deeper validation realism, followed by richer explainability diagnostics when needed.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

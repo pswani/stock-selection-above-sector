@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, field_validator
 
 from stock_selection.models import MetricDirection
 
 
-class PillarName(str, Enum):
+class PillarName(StrEnum):
     RP = "RP"
     G = "G"
     Q = "Q"
@@ -17,7 +17,7 @@ class PillarName(str, Enum):
     S = "S"
 
 
-class MissingDataPolicy(str, Enum):
+class MissingDataPolicy(StrEnum):
     SKIP_FACTOR = "skip_factor"
     DROP_SECURITY = "drop_security"
 
@@ -109,4 +109,3 @@ def build_canonical_registry() -> FactorRegistry:
     for definition in CANONICAL_FACTOR_DEFINITIONS:
         registry.register(definition)
     return registry
-

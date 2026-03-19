@@ -130,6 +130,7 @@ Milestones:
    - Scope: per-sector and global ranks, confidence scores, missing-data disclosure, explainability payloads.
    - Acceptance criteria: ranking artifacts include required fields and confidence behavior.
    - Tests: integration tests for ranking assembly and explainability output.
+   - Progress: explanation cards now expose structured top/weakest pillar details, penalty-rule names, assembly status, and missing-pillar disclosure, and the reporting layer can export those cards deterministically.
    - Dependencies: Milestones 1-7.
 
 9. **Milestone 9 — Validation/backtest harness**
@@ -137,6 +138,7 @@ Milestones:
    - Acceptance criteria: reproducible validation run from fixtures with documented assumptions/limits.
    - Tests: integration/snapshot tests for backtest outputs and guardrails.
    - Progress: the validation harness now preserves explicit residual cash when fewer than `top_k` names are available and surfaces invested weight, cash weight, and buy/sell turnover in period results instead of silently reweighting underfilled periods to 100% invested.
+   - Progress: the harness now also validates unique period dates, ranking-result `as_of` alignment, and non-blank benchmark names, and the reporting layer can export deterministic validation-period diagnostics including benchmark-relative gap in bps.
    - Dependencies: Milestones 1-8.
 
 10. **Milestone 10 — CLI/reporting/export workflow hardening**

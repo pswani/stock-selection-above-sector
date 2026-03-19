@@ -112,9 +112,15 @@ def test_build_explanation_cards_derives_strengths_and_risks_from_rankings() -> 
     cards = build_explanation_cards(rankings, assemblies)
 
     assert cards[0].ticker == "AAA"
+    assert cards[0].as_of == date(2026, 1, 31)
+    assert cards[0].profile_name == "balanced"
     assert cards[0].strengths
+    assert cards[0].top_pillars
+    assert cards[0].top_pillars[0].pillar in {"RP", "G", "Q", "V", "R", "S"}
     assert "Final score" in cards[0].summary
+    assert cards[0].assembly_status == "ok"
     assert any(item.startswith("penalty:minimum_quality") for item in cards[-1].risks)
+    assert cards[-1].penalty_rules == ["minimum_quality"]
 
 
 def test_run_validation_backtest_models_turnover_costs_and_benchmark() -> None:
@@ -207,6 +213,9 @@ def test_run_validation_backtest_models_turnover_costs_and_benchmark() -> None:
     assert report.periods[0].sell_turnover == pytest.approx(0.0)
     assert report.periods[0].selected_tickers == ["AAA", "CCC"]
     assert report.periods[0].cash_weight == pytest.approx(0.0)
+    assert report.periods[0].benchmark_relative_gap_bps == pytest.approx(
+        report.periods[0].excess_return * 10_000.0
+    )
     assert report.average_turnover >= 0
     assert report.cumulative_excess_return == pytest.approx(
         report.cumulative_portfolio_net_return - report.cumulative_benchmark_return
@@ -256,8 +265,69 @@ def test_run_validation_backtest_preserves_cash_when_fewer_than_top_k_rankings()
     assert second_period.buy_turnover == pytest.approx(0.5)
     assert second_period.sell_turnover == pytest.approx(0.0)
     assert second_period.turnover == pytest.approx(0.5)
+    assert report.periods_with_underfill == 1
+    assert report.max_cash_weight == pytest.approx(0.5)
+    assert report.benchmark_name == "sample_sector_benchmark"
     assert "unallocated_cash_when_fewer_than_top_k_rankings" in report.assumptions
+    assert "benchmark_return_assumed_forward_aligned_to_same_period" in report.assumptions
+    assert (
+        "benchmark_series_type_and_construction_are_external_to_this_harness"
+        in report.limitations
+    )
     assert "cash_earns_zero_return_when_portfolio_is_underfilled" in report.limitations
+
+
+def test_run_validation_backtest_rejects_period_alignment_mismatch() -> None:
+    with pytest.raises(ValueError, match="ranking_results as_of to match the period input"):
+        run_validation_backtest(
+            [
+                ValidationPeriodInput(
+                    as_of=date(2026, 1, 31),
+                    ranking_results=[
+                        _ranking_result("AAA", date(2026, 2, 28), final_score=90.0),
+                    ],
+                    realized_returns={"AAA": 0.04},
+                    benchmark_return=0.01,
+                )
+            ],
+            top_k=1,
+            transaction_cost_bps=10.0,
+            benchmark_name="sample_sector_benchmark",
+        )
+
+
+def test_run_validation_backtest_rejects_duplicate_period_dates() -> None:
+    period = ValidationPeriodInput(
+        as_of=date(2026, 1, 31),
+        ranking_results=[_ranking_result("AAA", date(2026, 1, 31), final_score=90.0)],
+        realized_returns={"AAA": 0.04},
+        benchmark_return=0.01,
+    )
+
+    with pytest.raises(ValueError, match="unique as_of dates per period"):
+        run_validation_backtest(
+            [period, period],
+            top_k=1,
+            transaction_cost_bps=10.0,
+            benchmark_name="sample_sector_benchmark",
+        )
+
+
+def test_run_validation_backtest_rejects_blank_benchmark_name() -> None:
+    period = ValidationPeriodInput(
+        as_of=date(2026, 1, 31),
+        ranking_results=[_ranking_result("AAA", date(2026, 1, 31), final_score=90.0)],
+        realized_returns={"AAA": 0.04},
+        benchmark_return=0.01,
+    )
+
+    with pytest.raises(ValueError, match="benchmark_name must not be blank"):
+        run_validation_backtest(
+            [period],
+            top_k=1,
+            transaction_cost_bps=10.0,
+            benchmark_name="  ",
+        )
 
 
 def _ranking_result(ticker: str, as_of: date, *, final_score: float) -> RankingResult:

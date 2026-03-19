@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from stock_selection.backtest.validation import ValidationReport
+from stock_selection.explainability import ExplanationCard, ExplanationPillarDetail
 from stock_selection.models import PillarScoreCard, RankingResult
 from stock_selection.scoring.composite import PillarScoreAssembly
 from stock_selection.scoring.relative_performance import RelativePerformancePreviewRank
@@ -43,6 +45,43 @@ RP_PREVIEW_BASE_COLUMNS = [
     "meets_minimum_pillars",
     "missing_pillars",
     "ranking_status",
+]
+EXPLANATION_CARD_BASE_COLUMNS = [
+    "ticker",
+    "as_of",
+    "profile_name",
+    "final_score",
+    "weighted_score",
+    "total_penalty",
+    "assembly_status",
+    "missing_pillars",
+    "penalty_rules",
+    "summary",
+    "strengths",
+    "risks",
+]
+VALIDATION_PERIOD_BASE_COLUMNS = [
+    "benchmark_name",
+    "top_k",
+    "transaction_cost_bps",
+    "periods_with_underfill",
+    "max_cash_weight",
+    "as_of",
+    "requested_top_k",
+    "available_rankings",
+    "selected_count",
+    "selected_tickers",
+    "invested_weight",
+    "cash_weight",
+    "portfolio_gross_return",
+    "buy_turnover",
+    "sell_turnover",
+    "turnover",
+    "transaction_cost",
+    "portfolio_net_return",
+    "benchmark_return",
+    "excess_return",
+    "benchmark_relative_gap_bps",
 ]
 
 
@@ -150,6 +189,67 @@ def relative_performance_preview_ranks_to_frame(
     return pd.DataFrame(rows, columns=RP_PREVIEW_BASE_COLUMNS)
 
 
+def explanation_cards_to_frame(cards: list[ExplanationCard]) -> pd.DataFrame:
+    top_pillar_columns = _detail_columns(cards, attribute="top_pillars")
+    weakest_pillar_columns = _detail_columns(cards, attribute="weakest_pillars")
+    rows = []
+    for card in cards:
+        row = {
+            "ticker": card.ticker,
+            "as_of": card.as_of.isoformat(),
+            "profile_name": card.profile_name,
+            "final_score": card.final_score,
+            "weighted_score": card.weighted_score,
+            "total_penalty": card.total_penalty,
+            "assembly_status": card.assembly_status,
+            "missing_pillars": ",".join(card.missing_pillars),
+            "penalty_rules": ",".join(card.penalty_rules),
+            "summary": card.summary,
+            "strengths": "|".join(card.strengths),
+            "risks": "|".join(card.risks),
+        }
+        row.update(_detail_values(card.top_pillars, prefix="top_pillars"))
+        row.update(_detail_values(card.weakest_pillars, prefix="weakest_pillars"))
+        rows.append(row)
+    columns = [
+        *EXPLANATION_CARD_BASE_COLUMNS,
+        *top_pillar_columns,
+        *weakest_pillar_columns,
+    ]
+    return pd.DataFrame(rows, columns=columns)
+
+
+def validation_report_periods_to_frame(report: ValidationReport) -> pd.DataFrame:
+    rows = []
+    for period in report.periods:
+        rows.append(
+            {
+                "benchmark_name": report.benchmark_name,
+                "top_k": report.top_k,
+                "transaction_cost_bps": report.transaction_cost_bps,
+                "periods_with_underfill": report.periods_with_underfill,
+                "max_cash_weight": report.max_cash_weight,
+                "as_of": period.as_of.isoformat(),
+                "requested_top_k": period.requested_top_k,
+                "available_rankings": period.available_rankings,
+                "selected_count": period.selected_count,
+                "selected_tickers": ",".join(period.selected_tickers),
+                "invested_weight": period.invested_weight,
+                "cash_weight": period.cash_weight,
+                "portfolio_gross_return": period.portfolio_gross_return,
+                "buy_turnover": period.buy_turnover,
+                "sell_turnover": period.sell_turnover,
+                "turnover": period.turnover,
+                "transaction_cost": period.transaction_cost,
+                "portfolio_net_return": period.portfolio_net_return,
+                "benchmark_return": period.benchmark_return,
+                "excess_return": period.excess_return,
+                "benchmark_relative_gap_bps": period.benchmark_relative_gap_bps,
+            }
+        )
+    return pd.DataFrame(rows, columns=VALIDATION_PERIOD_BASE_COLUMNS)
+
+
 def write_ranking_csv(results: list[RankingResult], path: str | Path) -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -184,6 +284,23 @@ def write_relative_performance_preview_csv(
     return output
 
 
+def write_explanation_cards_csv(cards: list[ExplanationCard], path: str | Path) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    explanation_cards_to_frame(cards).to_csv(output, index=False)
+    return output
+
+
+def write_validation_report_periods_csv(
+    report: ValidationReport,
+    path: str | Path,
+) -> Path:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    validation_report_periods_to_frame(report).to_csv(output, index=False)
+    return output
+
+
 def _prefixed_union_columns(
     *,
     dictionaries: Sequence[Mapping[str, object]],
@@ -191,3 +308,24 @@ def _prefixed_union_columns(
 ) -> list[str]:
     keys = sorted({key for mapping in dictionaries for key in mapping})
     return [f"{prefix}{key}" for key in keys]
+
+
+def _detail_columns(cards: list[ExplanationCard], *, attribute: str) -> list[str]:
+    max_items = max((len(getattr(card, attribute)) for card in cards), default=0)
+    columns: list[str] = []
+    for index in range(max_items):
+        columns.append(f"{attribute}_{index + 1}_pillar")
+        columns.append(f"{attribute}_{index + 1}_score")
+    return columns
+
+
+def _detail_values(
+    details: Sequence[ExplanationPillarDetail],
+    *,
+    prefix: str,
+) -> dict[str, object]:
+    values: dict[str, object] = {}
+    for index, detail in enumerate(details, start=1):
+        values[f"{prefix}_{index}_pillar"] = detail.pillar
+        values[f"{prefix}_{index}_score"] = detail.score
+    return values

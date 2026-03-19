@@ -60,3 +60,6 @@
 - Composite assembly now counts only non-`None` pillar scores toward `available_pillar_count` and `min_required_pillars`, so final rankings exclude incompletely scored names while assembly/reporting outputs still retain their coverage and diagnostics.
 - The factor registry enums `PillarName` and `MissingDataPolicy` now inherit from `StrEnum`, which preserves behavior while restoring a clean repo-wide Ruff baseline.
 - Validation periods now keep explicit residual cash when fewer than `top_k` rankings are available, and turnover is reported as buy/sell one-way turnover on the invested sleeves rather than assuming automatic reweighting to a fully invested book.
+- Explanation cards now expose structured top/weakest pillar details, penalty-rule names, assembly status, and missing-pillar lists in addition to the existing summary/strength/risk strings.
+- Reporting now includes deterministic export surfaces for explanation cards and validation periods so benchmark-relative and cash/turnover diagnostics remain explicit outside Python objects.
+- Validation backtests now require unique period dates, per-period ranking/result date alignment, and non-blank benchmark names to make reporting semantics harder to misuse.

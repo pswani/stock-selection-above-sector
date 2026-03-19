@@ -1,16 +1,22 @@
 from datetime import date
 from pathlib import Path
 
+from stock_selection.backtest.validation import ValidationPeriodInput, run_validation_backtest
+from stock_selection.explainability import ExplanationCard, ExplanationPillarDetail
 from stock_selection.models import PillarScoreCard, RankingResult
 from stock_selection.reporting import (
+    explanation_cards_to_frame,
     pillar_score_assemblies_to_frame,
     pillar_score_cards_to_frame,
     ranking_results_to_frame,
     relative_performance_preview_ranks_to_frame,
+    validation_report_periods_to_frame,
+    write_explanation_cards_csv,
     write_pillar_score_assemblies_csv,
     write_pillar_score_cards_csv,
     write_ranking_csv,
     write_relative_performance_preview_csv,
+    write_validation_report_periods_csv,
 )
 from stock_selection.scoring import (
     RelativePerformancePillarEngine,
@@ -205,5 +211,149 @@ def test_write_relative_performance_preview_csv(tmp_path: Path) -> None:
     )
 
     path = write_relative_performance_preview_csv(preview, tmp_path / "rp-preview.csv")
+
+    assert path.exists()
+
+
+def test_explanation_cards_to_frame_has_richer_columns() -> None:
+    card = ExplanationCard(
+        ticker="AAA",
+        as_of=date(2026, 1, 31),
+        profile_name="balanced",
+        final_score=88.0,
+        weighted_score=90.0,
+        total_penalty=2.0,
+        assembly_status="ok",
+        missing_pillars=[],
+        top_pillars=[
+            ExplanationPillarDetail(pillar="G", score=100.0),
+            ExplanationPillarDetail(pillar="RP", score=95.0),
+        ],
+        weakest_pillars=[
+            ExplanationPillarDetail(pillar="V", score=55.0),
+        ],
+        penalty_rules=["minimum_quality"],
+        summary=(
+            "Final score 88.00 from weighted score 90.00 with 1 penalties "
+            "and assembly status ok."
+        ),
+        strengths=["G=100.00", "RP=95.00"],
+        risks=["V=55.00", "penalty:minimum_quality"],
+    )
+
+    frame = explanation_cards_to_frame([card])
+
+    assert frame.loc[0, "ticker"] == "AAA"
+    assert frame.loc[0, "profile_name"] == "balanced"
+    assert frame.loc[0, "penalty_rules"] == "minimum_quality"
+    assert frame.loc[0, "top_pillars_1_pillar"] == "G"
+    assert frame.loc[0, "top_pillars_2_score"] == 95.0
+    assert frame.loc[0, "weakest_pillars_1_pillar"] == "V"
+
+
+def test_write_explanation_cards_csv(tmp_path: Path) -> None:
+    card = ExplanationCard(
+        ticker="AAA",
+        as_of=date(2026, 1, 31),
+        profile_name="balanced",
+        final_score=88.0,
+        weighted_score=90.0,
+        total_penalty=2.0,
+        assembly_status="ok",
+        missing_pillars=[],
+        top_pillars=[ExplanationPillarDetail(pillar="G", score=100.0)],
+        weakest_pillars=[ExplanationPillarDetail(pillar="V", score=55.0)],
+        penalty_rules=["minimum_quality"],
+        summary="Summary",
+        strengths=["G=100.00"],
+        risks=["V=55.00"],
+    )
+
+    path = write_explanation_cards_csv([card], tmp_path / "explanations.csv")
+
+    assert path.exists()
+
+
+def test_validation_report_periods_to_frame_exposes_benchmark_and_cash_diagnostics() -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    RankingResult(
+                        ticker="AAA",
+                        as_of=date(2026, 1, 31),
+                        profile_name="balanced",
+                        weighted_score=90.0,
+                        total_penalty=0.0,
+                        final_score=90.0,
+                        pillar_scores={"RP": 90.0},
+                    )
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            )
+        ],
+        top_k=2,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+
+    frame = validation_report_periods_to_frame(report)
+
+    assert frame.columns.tolist() == [
+        "benchmark_name",
+        "top_k",
+        "transaction_cost_bps",
+        "periods_with_underfill",
+        "max_cash_weight",
+        "as_of",
+        "requested_top_k",
+        "available_rankings",
+        "selected_count",
+        "selected_tickers",
+        "invested_weight",
+        "cash_weight",
+        "portfolio_gross_return",
+        "buy_turnover",
+        "sell_turnover",
+        "turnover",
+        "transaction_cost",
+        "portfolio_net_return",
+        "benchmark_return",
+        "excess_return",
+        "benchmark_relative_gap_bps",
+    ]
+    assert frame.loc[0, "benchmark_name"] == "sample_sector_benchmark"
+    assert frame.loc[0, "cash_weight"] == 0.5
+    assert frame.loc[0, "benchmark_relative_gap_bps"] == 95.0
+
+
+def test_write_validation_report_periods_csv(tmp_path: Path) -> None:
+    report = run_validation_backtest(
+        [
+            ValidationPeriodInput(
+                as_of=date(2026, 1, 31),
+                ranking_results=[
+                    RankingResult(
+                        ticker="AAA",
+                        as_of=date(2026, 1, 31),
+                        profile_name="balanced",
+                        weighted_score=90.0,
+                        total_penalty=0.0,
+                        final_score=90.0,
+                        pillar_scores={"RP": 90.0},
+                    )
+                ],
+                realized_returns={"AAA": 0.04},
+                benchmark_return=0.01,
+            )
+        ],
+        top_k=2,
+        transaction_cost_bps=10.0,
+        benchmark_name="sample_sector_benchmark",
+    )
+
+    path = write_validation_report_periods_csv(report, tmp_path / "validation-periods.csv")
 
     assert path.exists()

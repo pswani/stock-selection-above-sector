@@ -45,3 +45,15 @@
 - The next review-driven hardening batch should make latest-only provider timing behavior explicit at the contract boundary before validation/backtesting work relies on implicit `as_of` semantics.
 - Provider methods that accept `as_of` for interface consistency must document when they are latest-state only and not point-in-time safe; `list_securities(...)` and `get_peer_groups(...)` in the FMP adapter now do so explicitly.
 - Review-only audits should prefer a small, high-signal findings set over broad milestone restatements; use `docs/audit-findings.md` for actionable open issues and keep the first remediation batch scoped to one issue when possible.
+- The public CLI should distinguish demo-only exports from implemented pipeline-backed paths explicitly: hardcoded ranking rows now live behind `export-demo-ranking`, the old `export-sample-ranking` name remains only as a hidden deprecated alias, and RP export commands print notices that they are pipeline-backed while the RP preview path also states that it is not a final multi-pillar ranking.
+- Milestone 6 begins with the narrowest Growth contract: use `revenue_growth_yoy` from `FundamentalSnapshot` as the first `G` factor input, normalize it by peer group, and emit `PillarScoreCard` outputs via `build_growth_observations(...)`, `score_growth(...)`, and `GrowthPillarEngine`.
+- Growth currently treats stale fundamental snapshots as missing for the requested `as_of` date rather than assuming carry-forward semantics.
+- The full six-pillar deterministic path is now implemented with:
+  - `Q` from `return_on_equity`
+  - `V` from `forward_pe`
+  - `R` from `volatility_3m`
+  - `S` from `eps_revision_90d`
+  - `build_composite_rankings(...)` as the primary composite ranking pipeline on top of the existing RP/G paths
+- Sample CLI/reporting surfaces must remain explicit about whether they are preview-only, demo-only, or final pipeline-backed exports.
+- The explainability layer now derives deterministic `ExplanationCard` outputs directly from ranking results and assemblies.
+- The validation layer now uses an explicit deterministic harness with top-k selection, turnover, transaction costs, benchmark returns, and documented assumptions rather than snapshot writing alone.

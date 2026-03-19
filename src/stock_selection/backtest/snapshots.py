@@ -1,3 +1,11 @@
+"""Snapshot helpers for deterministic validation workflows.
+
+These utilities still only write ranking snapshots, but they now complement the
+validation harness rather than standing in for it. Point-in-time-safe data
+alignment, richer execution assumptions, and broader benchmark logic remain
+separate concerns for later milestones.
+"""
+
 from __future__ import annotations
 
 from datetime import date

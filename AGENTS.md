@@ -201,3 +201,17 @@ In the final response:
 - summarize tests/checks run
 - state remaining issues
 - provide the exact next resume prompt
+
+## Git permissions expectation
+For this trusted repository, Codex may use git for local workflow tasks across prompts:
+- `git diff`
+- `git status`
+- `git add`
+- `git commit`
+
+Rules:
+- do not push unless explicitly asked by the user
+- keep commits narrowly scoped to the completed task
+- use Conventional Commits
+- only commit after relevant checks for changed scope have been run
+- report the exact commit message in the final response

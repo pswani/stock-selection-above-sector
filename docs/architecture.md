@@ -36,10 +36,13 @@ This repository provides an opinionated foundation for a sector-relative stock s
    - Snapshot exports
    - Pillar score card exports
    - RP preview ranking exports
+   - Composite ranking exports
+   - Explainability card exports
    - Human-readable reports
 8. **Validation layer**
    - Unit tests
    - Reproducible sample fixtures
+   - Cost/turnover-aware validation harness
    - Backtest and snapshot comparison hooks
 
 ## Deliberate boundaries

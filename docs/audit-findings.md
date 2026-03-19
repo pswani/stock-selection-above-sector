@@ -2,7 +2,7 @@
 
 ## Summary
 - High: 0 open, 1 fixed
-- Medium: 4
+- Medium: 1
 - Low: 1
 
 ## Issues
@@ -27,6 +27,7 @@
 - Recommended fix: Keep the sample command clearly scoped as demo-only or replace it with the next smallest pipeline-backed ranking/export consumer when multi-pillar semantics exist.
 - Test expectation: Add focused CLI tests that make the command contract explicit, especially if the command is renamed, narrowed, or replaced.
 - Dependencies: Either a docs-only clarification or later multi-pillar ranking work.
+- Status: Verified complete on 2026-03-17. The public hardcoded ranking export is now explicitly `export-demo-ranking`, `export-sample-ranking` remains only as a hidden deprecated alias, and RP CLI exports now state when they are pipeline-backed preview versus non-preview paths.
 
 ### AUDIT-003 — Framework implementation remains partial beyond the RP slice
 - Severity: Medium
@@ -37,6 +38,7 @@
 - Recommended fix: Continue milestone work incrementally, starting with the narrowest Growth pillar path while preserving the current normalization and partial-assembly contracts.
 - Test expectation: Each new pillar should add focused factor, normalization-integration, scoring, and partial-assembly tests.
 - Dependencies: Current Milestone 4 and Milestone 5 contracts.
+- Status: Verified complete on 2026-03-18. The repo now includes deterministic pillar paths for `RP`, `G`, `Q`, `V`, `R`, and `S`, plus a composite ranking pipeline that assembles complete six-pillar score sets and emits final `RankingResult` outputs.
 
 ### AUDIT-004 — Explainability and backtest layers are still scaffolds
 - Severity: Medium
@@ -47,6 +49,7 @@
 - Recommended fix: Keep these deferred, but preserve them as explicit later milestones with anti-bias acceptance criteria before any validation claims are made.
 - Test expectation: Add snapshot and validation tests only when these layers gain real behavior.
 - Dependencies: Broader scoring and ranking pipeline.
+- Status: Verified complete on 2026-03-18. The repo now includes deterministic explanation-card generation and a validation harness that models top-k selection, turnover, transaction costs, and benchmark-relative excess returns with explicit assumptions and limitations.
 
 ### AUDIT-005 — RP missing-data scoring policy is explicit but still provisional
 - Severity: Medium

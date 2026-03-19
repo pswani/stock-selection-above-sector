@@ -1,14 +1,13 @@
 # Roadmap
 
 ## Current phase
-Milestone 5 complete; Milestone 6 remains next for feature work, but the immediate review-driven batch is CLI contract hardening.
+Milestone 6 is now complete for the initial six-pillar scoring/ranking batch, and the next review-driven work shifts to ranking-policy refinement and validation depth.
 
 ## Immediate milestones
-1. Clarify or tighten the CLI sample-ranking contract so demo-only commands do not blur with implemented pipeline-backed exports.
-2. Start Milestone 6 by implementing the narrowest Growth pillar path on top of the completed normalization and partial-assembly contracts.
-3. Implement the remaining pillars incrementally (Q, V, R, S) after Growth.
-4. Wire ranking confidence/missing-data disclosure into result assembly.
-5. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
+1. Revisit the current missing-data fallback and ranking-coverage policy now that full six-pillar ranking exists.
+2. Deepen validation realism beyond the current deterministic turnover/cost harness.
+3. Expand explainability beyond summary cards into richer ranking diagnostics when needed.
+4. Address the repo-wide Ruff UP042 baseline when it is brought into scope.
 
 ## Cross-cutting readiness
 - The re-uploaded framework PDF is now stored at `requirements/framework-primary-source.pdf` and should be treated as the more specific requirements source when it can be inspected reliably.
@@ -27,7 +26,11 @@ Milestone 5 complete; Milestone 6 remains next for feature work, but the immedia
 - The next broader RP assembly step is now complete: RP score cards can be grouped into deterministic per-ticker partial assemblies with explicit `insufficient_pillars` behavior and reporting projections, without starting other pillars or inventing final rankings.
 - Milestone 5 is now complete: RP also has a ranking-adjacent preview consumer through `rank_relative_performance_assemblies(...)`, `relative_performance_preview_ranks_to_frame(...)`, `write_relative_performance_preview_csv(...)`, and `export-sample-relative-performance-preview`.
 - The latest review batch is complete: provider security listings no longer invent sector data, and investability gating now distinguishes peer classification from exchange-only metadata.
-- The latest audit is complete: the top open review-driven gap is now the CLI sample-ranking contract, followed by broader framework incompleteness beyond the RP slice.
+- The latest audit batch is now complete: the misleading sample ranking export is replaced by an explicit public `export-demo-ranking` command, the old name remains only as a hidden deprecated alias, and RP CLI exports now declare themselves pipeline-backed while preview output remains explicit about not being final multi-pillar ranking.
+- Milestone 6 now covers all six pillars and a deterministic composite ranking path, with pipeline-backed sample exports for final ranking, explanation cards, and validation results.
+- The validation layer now includes a deterministic top-k harness with turnover, transaction costs, benchmark-relative excess returns, and explicit assumptions/limitations.
+- The explainability layer now includes deterministic explanation-card generation derived from ranking outputs.
+- The top open review-driven gap is now the provisional missing-data fallback policy, followed by deeper validation realism and the repo-wide Ruff baseline.
 
 ## Working rule
 Every non-trivial Codex session should leave behind a resumable checkpoint.

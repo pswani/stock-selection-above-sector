@@ -18,6 +18,19 @@ from stock_selection.scoring.relative_performance import RelativePerformancePill
 
 app = typer.Typer(add_completion=False)
 
+DEMO_ONLY_RANKING_NOTICE = (
+    "demo-only ranking export: writes hardcoded sample RankingResult rows and does not use "
+    "the implemented scoring pipeline"
+)
+PIPELINE_BACKED_RP_NOTICE = (
+    "pipeline-backed RP export: writes output from the implemented relative-performance "
+    "normalization and scoring path"
+)
+PIPELINE_BACKED_RP_PREVIEW_NOTICE = (
+    "pipeline-backed RP preview export: writes output from the implemented RP partial-assembly "
+    "preview path, not a final multi-pillar ranking"
+)
+
 SAMPLE_RP_RETURNS_6M = {
     "AAA": 0.30,
     "BBB": 0.10,
@@ -41,12 +54,16 @@ def status() -> None:
     )
 
 
-@app.command()
-def export_sample_ranking(
-    output: str = typer.Option("outputs/reports/sample-ranking.csv", help="Destination CSV path"),
+@app.command("export-demo-ranking")
+def export_demo_ranking(
+    output: str = typer.Option("outputs/reports/demo-ranking.csv", help="Destination CSV path"),
     as_of: str = typer.Option("2026-01-31", help="As-of date in YYYY-MM-DD format"),
     profile: str = typer.Option("balanced", help="Weight profile name"),
 ) -> None:
+    """Export demo-only sample ranking rows.
+
+    This command is intentionally not pipeline-backed.
+    """
     profile_obj = load_weight_profile(profile)
     as_of_date = date.fromisoformat(as_of)
     results = [
@@ -66,7 +83,22 @@ def export_sample_ranking(
         ),
     ]
     path = write_ranking_csv(results, Path(output))
+    print(f"[bold yellow]{DEMO_ONLY_RANKING_NOTICE}[/bold yellow]")
     print(f"[bold blue]wrote[/bold blue] {path}")
+
+
+@app.command("export-sample-ranking", hidden=True)
+def export_sample_ranking_alias(
+    output: str = typer.Option("outputs/reports/sample-ranking.csv", help="Destination CSV path"),
+    as_of: str = typer.Option("2026-01-31", help="As-of date in YYYY-MM-DD format"),
+    profile: str = typer.Option("balanced", help="Weight profile name"),
+) -> None:
+    """Backward-compatible alias for the demo-only ranking export."""
+    print(
+        "[bold yellow]deprecated command alias:[/bold yellow] "
+        "`export-sample-ranking` maps to `export-demo-ranking`."
+    )
+    export_demo_ranking(output=output, as_of=as_of, profile=profile)
 
 
 @app.command()
@@ -74,6 +106,7 @@ def export_sample_relative_performance(
     output: str = typer.Option("outputs/reports/sample-rp.csv", help="Destination CSV path"),
     as_of: str = typer.Option("2026-01-31", help="As-of date in YYYY-MM-DD format"),
 ) -> None:
+    """Export pipeline-backed sample RP pillar score cards."""
     as_of_date = date.fromisoformat(as_of)
     engine = RelativePerformancePillarEngine(
         returns_6m=SAMPLE_RP_RETURNS_6M,
@@ -81,6 +114,7 @@ def export_sample_relative_performance(
     )
     cards = engine.score_cards(sorted(SAMPLE_RP_RETURNS_6M), as_of=as_of_date)
     path = write_pillar_score_cards_csv(cards, Path(output))
+    print(f"[bold green]{PIPELINE_BACKED_RP_NOTICE}[/bold green]")
     print(f"[bold blue]wrote[/bold blue] {path}")
 
 
@@ -92,6 +126,7 @@ def export_sample_relative_performance_preview(
     ),
     as_of: str = typer.Option("2026-01-31", help="As-of date in YYYY-MM-DD format"),
 ) -> None:
+    """Export pipeline-backed RP preview rankings from the partial-assembly path."""
     settings = load_settings()
     as_of_date = date.fromisoformat(as_of)
     engine = RelativePerformancePillarEngine(
@@ -104,6 +139,7 @@ def export_sample_relative_performance_preview(
         min_required_pillars=settings.ranking.min_required_pillars,
     )
     path = write_relative_performance_preview_csv(preview_ranks, Path(output))
+    print(f"[bold green]{PIPELINE_BACKED_RP_PREVIEW_NOTICE}[/bold green]")
     print(f"[bold blue]wrote[/bold blue] {path}")
 
 
